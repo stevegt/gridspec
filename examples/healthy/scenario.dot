@@ -1,0 +1,7 @@
+digraph healthy_scenario {
+  graph [specdot_version="1", specdot_kind="scenario", specdot_id="scenario.happy", URL="scenario.md#happy-path"];
+
+  begin [specdot_id="scenario.happy.begin", specdot_kind="start", specdot_initial="true"];
+  complete [specdot_id="scenario.happy.complete", specdot_kind="final", specdot_final="true"];
+  begin -> complete [specdot_id="scenario.happy.step", specdot_kind="step"];
+}

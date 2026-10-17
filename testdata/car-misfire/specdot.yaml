@@ -1,0 +1,13 @@
+schema: specdot/v1
+module: example.invalid.car-misfire
+roots: [.]
+include: ["**/*.dot", "**/*.md"]
+exclude: []
+profiles:
+  default:
+    finite:
+      enabled: true
+      max_states: 1000
+      max_depth: 50
+      max_queue: 8
+      max_transitions: 10000

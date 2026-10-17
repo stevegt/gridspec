@@ -1,0 +1,10 @@
+digraph healthy_worker {
+  graph [specdot_version="1", specdot_kind="machine", specdot_id="machine.worker", specdot_agent="agent.worker", URL="worker.md#worker-machine"];
+
+  idle [specdot_id="state.worker.idle", specdot_kind="state", specdot_initial="true", specdot_ignore="Finish"];
+  working [specdot_id="state.worker.working", specdot_kind="state", specdot_refuse="Start"];
+  done [specdot_id="state.worker.done", specdot_kind="final", specdot_final="true", specdot_ignore="Start,Finish"];
+
+  idle -> working [specdot_id="transition.worker.start", specdot_kind="transition", specdot_event="Start"];
+  working -> done [specdot_id="transition.worker.finish", specdot_kind="transition", specdot_event="Finish"];
+}

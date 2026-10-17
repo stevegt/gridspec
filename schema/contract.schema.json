@@ -1,0 +1,209 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://promisegrid.github.io/specdot/schema/contract.schema.json",
+  "title": "specdot Markdown contract v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema", "for"],
+  "properties": {
+    "schema": {"const": "specdot.contract/v1"},
+    "for": {"$ref": "#/$defs/id"},
+    "kind": {"type": "string"},
+    "status": {"enum": ["active", "draft", "historical", "superseded"]},
+    "summary": {"type": "string"},
+    "agent": {"$ref": "#/$defs/agent"},
+    "promise": {"$ref": "#/$defs/promise"},
+    "signal": {"$ref": "#/$defs/signal"},
+    "assessment": {"$ref": "#/$defs/assessment"},
+    "machine": {"$ref": "#/$defs/machine"},
+    "data": {"$ref": "#/$defs/data"},
+    "channel": {"$ref": "#/$defs/channel"},
+    "effect": {"$ref": "#/$defs/effect"},
+    "claims": {"type": "array", "items": {"$ref": "#/$defs/claim"}},
+    "waivers": {"type": "array", "items": {"$ref": "#/$defs/waiver"}},
+    "latitude": {"type": "array", "items": {"$ref": "#/$defs/latitude"}},
+    "metadata": {"type": "object", "additionalProperties": {"type": "string"}}
+  },
+  "$defs": {
+    "id": {"type": "string", "pattern": "^[A-Za-z][A-Za-z0-9_.:/-]*$"},
+    "ids": {"type": "array", "items": {"$ref": "#/$defs/id"}},
+    "body": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["type"],
+      "properties": {
+        "type": {"type": "string"},
+        "constraints": {"type": "string"},
+        "resource": {"$ref": "#/$defs/id"}
+      }
+    },
+    "agent": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "controls": {"$ref": "#/$defs/ids"},
+        "capabilities": {"$ref": "#/$defs/ids"},
+        "machines": {"$ref": "#/$defs/ids"},
+        "members": {"$ref": "#/$defs/ids"}
+      }
+    },
+    "promise": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["promiser", "promisee", "polarity", "body"],
+      "properties": {
+        "promiser": {"$ref": "#/$defs/id"},
+        "promisee": {"$ref": "#/$defs/id"},
+        "scope": {"$ref": "#/$defs/ids"},
+        "polarity": {"enum": ["offer", "accept", "+", "-"]},
+        "body": {"$ref": "#/$defs/body"},
+        "prerequisite": {"$ref": "#/$defs/id"},
+        "condition": {"type": "string"},
+        "evidence": {"type": "string"},
+        "external": {"type": "boolean"}
+      }
+    },
+    "signal": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["sender", "recipient", "mode", "body"],
+      "properties": {
+        "sender": {"$ref": "#/$defs/id"},
+        "recipient": {"$ref": "#/$defs/id"},
+        "mode": {"enum": ["signal", "imposition"]},
+        "body": {"$ref": "#/$defs/body"},
+        "condition": {"type": "string"}
+      }
+    },
+    "assessment": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["observer", "subject", "predicate", "evidence"],
+      "properties": {
+        "observer": {"$ref": "#/$defs/id"},
+        "subject": {"$ref": "#/$defs/id"},
+        "predicate": {"type": "string"},
+        "evidence": {"type": "string"}
+      }
+    },
+    "variable": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["name", "type", "initial"],
+      "properties": {
+        "name": {"type": "string", "pattern": "^[A-Za-z_][A-Za-z0-9_]*$"},
+        "type": {"type": "string"},
+        "initial": {},
+        "min": {"type": "integer"},
+        "max": {"type": "integer"},
+        "values": {"type": "array", "minItems": 1}
+      }
+    },
+    "event": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["name", "policy"],
+      "properties": {
+        "name": {"type": "string"},
+        "payload": {"type": "string"},
+        "policy": {"enum": ["handled", "deferred", "refused", "ignored"]}
+      }
+    },
+    "machine": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["agent"],
+      "properties": {
+        "agent": {"$ref": "#/$defs/id"},
+        "variables": {"type": "array", "items": {"$ref": "#/$defs/variable"}},
+        "events": {"type": "array", "items": {"$ref": "#/$defs/event"}},
+        "semantics": {"enum": ["run-to-completion"]}
+      }
+    },
+    "field": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["name", "type"],
+      "properties": {
+        "name": {"type": "string"},
+        "type": {"type": "string"},
+        "optional": {"type": "boolean"},
+        "min": {"type": "integer", "minimum": 0},
+        "max": {"type": "integer", "minimum": 0}
+      }
+    },
+    "data": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["type"],
+      "properties": {
+        "type": {"enum": ["scalar", "enum", "record", "union", "optional", "list", "set", "map", "ref", "newtype", "resource"]},
+        "base": {"type": "string"},
+        "key_type": {"type": "string"},
+        "value_type": {"type": "string"},
+        "fields": {"type": "array", "items": {"$ref": "#/$defs/field"}},
+        "values": {"type": "array", "items": {"type": "string"}},
+        "variants": {"type": "array", "items": {"type": "string"}},
+        "identity": {"type": "array", "items": {"type": "string"}},
+        "authority": {"$ref": "#/$defs/id"},
+        "mutable": {"type": "boolean"},
+        "lifecycle": {"type": "array", "items": {"type": "string"}},
+        "encoding": {"type": "string"},
+        "version": {"type": "string"},
+        "migration": {"type": "string"},
+        "secret": {"type": "boolean"},
+        "exclusive": {"type": "boolean"},
+        "retention": {"type": "array", "items": {"type": "string"}},
+        "physical_id_type": {"type": "string"}
+      }
+    },
+    "channel": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["from", "to", "payload"],
+      "properties": {
+        "from": {"$ref": "#/$defs/id"}, "to": {"$ref": "#/$defs/id"}, "payload": {"type": "string"},
+        "delivery": {"type": "string"}, "ordering": {"type": "string"}, "duplicate": {"type": "string"},
+        "loss": {"type": "string"}, "capacity": {"type": "integer", "minimum": 1}, "durability": {"type": "string"},
+        "integrity": {"type": "string"}, "timing": {"type": "string"}, "partition": {"type": "string"}, "restart": {"type": "string"},
+        "external": {"type": "boolean"}
+      }
+    },
+    "effect": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["agent", "operation", "resource", "outcomes"],
+      "properties": {
+        "agent": {"$ref": "#/$defs/id"}, "operation": {"type": "string"}, "resource": {"$ref": "#/$defs/id"},
+        "outcomes": {"type": "array", "items": {"type": "string"}},
+        "retain_on": {"type": "array", "items": {"type": "string"}}, "delete_on": {"type": "array", "items": {"type": "string"}},
+        "idempotency": {"type": "string"}, "correlation": {"type": "string"}, "retry": {"type": "string"},
+        "reconcile": {"type": "string"}, "evidence": {"type": "string"}, "assessor": {"$ref": "#/$defs/id"}
+      }
+    },
+    "claim": {
+      "type": "object", "additionalProperties": false, "required": ["id", "kind"],
+      "properties": {
+        "id": {"$ref": "#/$defs/id"},
+        "kind": {"enum": ["invariant", "always", "never", "forbidden", "reachable", "deadlock_free", "transition_coverage", "eventually", "leads_to"]},
+        "expression": {"type": "string"}, "state": {"$ref": "#/$defs/id"}, "from": {"$ref": "#/$defs/id"}, "to": {"$ref": "#/$defs/id"}, "required": {"type": "boolean"},
+        "assumptions": {"type": "array", "minItems": 1, "items": {"type": "string"}}
+      }
+    },
+    "waiver": {
+      "type": "object", "additionalProperties": false,
+      "required": ["rule", "reason", "owner", "expires", "risk", "mitigation"],
+      "properties": {
+        "rule": {"type": "string", "pattern": "^SDV[0-9]{3}$"}, "reason": {"type": "string"}, "owner": {"type": "string"},
+        "expires": {"type": "string", "format": "date"}, "risk": {"type": "string"}, "mitigation": {"type": "string"}
+      }
+    },
+    "latitude": {
+      "type": "object", "additionalProperties": false, "required": ["area", "allowed"],
+      "properties": {
+        "area": {"type": "string"}, "allowed": {"type": "array", "minItems": 1, "items": {"type": "string"}},
+        "constraint": {"type": "string"}, "owner": {"type": "string"}
+      }
+    }
+  }
+}

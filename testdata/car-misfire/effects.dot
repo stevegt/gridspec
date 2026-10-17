@@ -1,0 +1,10 @@
+digraph car_effects {
+  graph [specdot_version="1", specdot_kind="decision", specdot_id="graph.car.effects"];
+
+  planner [specdot_id="agent.planner", specdot_kind="agent"];
+  home [specdot_id="agent.grid_home", specdot_kind="agent"];
+
+  publish_planner [specdot_id="effect.car.publish_planner", specdot_kind="effect", specdot_agent="agent.planner", specdot_operation="publish", specdot_resource="resource.car", specdot_outcomes="success,failure,unknown"];
+  publish_home [specdot_id="effect.car.publish_home", specdot_kind="effect", specdot_agent="agent.grid_home", specdot_operation="publish", specdot_resource="resource.car", specdot_outcomes="success,failure,unknown"];
+  cleanup [specdot_id="effect.car.cleanup", specdot_kind="effect", specdot_agent="agent.planner", specdot_operation="delete", specdot_resource="resource.car", specdot_outcomes="success,failure,unknown", specdot_delete_on="failure,unknown", specdot_idempotency="delete-if-present", specdot_correlation="car_id", specdot_retry="bounded", specdot_reconcile="scan retained artifacts", specdot_evidence="deletion receipt", specdot_assessor="agent.planner"];
+}

@@ -1,0 +1,10 @@
+digraph healthy_algorithm {
+  graph [specdot_version="1", specdot_kind="algorithm", specdot_id="graph.healthy.algorithm", URL="algorithm.md#algorithm"];
+
+  input [specdot_id="algorithm.input", specdot_kind="step", specdot_role="input", specdot_type="type.command", specdot_accounted_by="promise.command.offer"];
+  execute [specdot_id="algorithm.execute", specdot_kind="step"];
+  output [specdot_id="algorithm.output", specdot_kind="step", specdot_role="output", specdot_type="type.result", specdot_accounted_by="promise.result.offer"];
+
+  input -> execute [specdot_id="flow.algorithm.receive", specdot_kind="flow"];
+  execute -> output [specdot_id="flow.algorithm.return", specdot_kind="flow"];
+}

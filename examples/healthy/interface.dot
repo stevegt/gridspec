@@ -1,0 +1,11 @@
+digraph healthy_interface {
+  graph [specdot_version="1", specdot_kind="promise", specdot_id="graph.healthy.interface", URL="interface.md#promise-interface"];
+
+  client [specdot_id="agent.client", specdot_kind="agent"];
+  worker [specdot_id="agent.worker", specdot_kind="agent"];
+
+  client -> worker [specdot_id="promise.command.offer", specdot_kind="promise", specdot_polarity="offer", specdot_type="type.command", URL="interface.md#command-offer"];
+  worker -> client [specdot_id="promise.command.accept", specdot_kind="promise", specdot_polarity="accept", specdot_type="type.command", URL="interface.md#command-acceptance"];
+  worker -> client [specdot_id="promise.result.offer", specdot_kind="promise", specdot_polarity="offer", specdot_type="type.result", URL="interface.md#result-offer"];
+  client -> worker [specdot_id="promise.result.accept", specdot_kind="promise", specdot_polarity="accept", specdot_type="type.result", URL="interface.md#result-acceptance"];
+}

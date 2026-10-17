@@ -1,0 +1,6 @@
+digraph healthy_data {
+  graph [specdot_version="1", specdot_kind="data", specdot_id="graph.healthy.data", URL="data.md#data-model"];
+
+  command [specdot_id="type.command", specdot_kind="type", specdot_type_kind="newtype", specdot_base="string"];
+  result  [specdot_id="type.result",  specdot_kind="type", specdot_type_kind="newtype", specdot_base="string"];
+}

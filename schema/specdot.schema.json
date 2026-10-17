@@ -1,0 +1,73 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://promisegrid.github.io/specdot/schema/specdot.schema.json",
+  "title": "specdot module manifest v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema", "module", "roots"],
+  "properties": {
+    "schema": {"const": "specdot/v1"},
+    "module": {"type": "string", "minLength": 1},
+    "roots": {"type": "array", "minItems": 1, "items": {"type": "string"}},
+    "include": {"type": "array", "items": {"type": "string"}},
+    "exclude": {"type": "array", "items": {"type": "string"}},
+    "link_policy": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "require_backlinks": {"type": "boolean"},
+        "allow_remote": {"type": "boolean"},
+        "remote_timeout": {"type": "string", "pattern": "^[0-9]+(ns|us|µs|ms|s|m|h)$"}
+      }
+    },
+    "profiles": {
+      "type": "object",
+      "additionalProperties": {"$ref": "#/$defs/profile"}
+    },
+    "build": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "targets": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["name"],
+            "properties": {
+              "name": {"type": "string"},
+              "profile": {"type": "string"},
+              "roots": {"type": "array", "items": {"type": "string"}}
+            }
+          }
+        }
+      }
+    }
+  },
+  "$defs": {
+    "profile": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "build_ready": {"type": "boolean"},
+        "warnings_as_errors": {"type": "boolean"},
+        "rules": {
+          "type": "object",
+          "additionalProperties": {"enum": ["error", "warning", "note", "off"]}
+        },
+        "finite": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "enabled": {"type": "boolean"},
+            "required": {"type": "boolean"},
+            "max_states": {"type": "integer", "minimum": 1},
+            "max_depth": {"type": "integer", "minimum": 1},
+            "max_queue": {"type": "integer", "minimum": 1},
+            "max_transitions": {"type": "integer", "minimum": 1}
+          }
+        }
+      }
+    }
+  }
+}

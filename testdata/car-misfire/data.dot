@@ -1,0 +1,6 @@
+digraph car_data {
+  graph [specdot_version="1", specdot_kind="data", specdot_id="graph.car.data"];
+
+  logical [specdot_id="type.car.logical", specdot_kind="type", specdot_type_kind="newtype", specdot_base="string"];
+  car [specdot_id="resource.car", specdot_kind="resource", specdot_type_kind="resource", specdot_mutable="true", specdot_identity="car_id", specdot_authority="agent.planner", specdot_exclusive="true", specdot_retention="failure,unknown", specdot_physical_id_type="type.car.logical", specdot_logical_id_type="type.car.logical"];
+}

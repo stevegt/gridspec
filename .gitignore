@@ -1,0 +1,4 @@
+/specdot
+/dist/
+*.ir.json
+*.sarif
