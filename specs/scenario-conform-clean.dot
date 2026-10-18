@@ -1,0 +1,16 @@
+digraph specdot_scenario_conform_clean {
+  graph [specdot_version="1", specdot_kind="scenario", specdot_id="scenario.specdot.conform.clean", specdot_depends_on="graph.specdot.conform", URL="conform-scenarios.md#clean-conformance"];
+
+  request [specdot_id="scenario.conform.request", specdot_kind="step", specdot_role="input", specdot_type="type.conform.request", specdot_accounted_by="promise.specdot.conform.request.offer"];
+  validate [specdot_id="scenario.conform.validate.spec", specdot_kind="step"];
+  bind [specdot_id="scenario.conform.resolve.bindings", specdot_kind="step"];
+  execute [specdot_id="scenario.conform.execute.scenarios", specdot_kind="step"];
+  compare [specdot_id="scenario.conform.compare.coverage", specdot_kind="step"];
+  result [specdot_id="scenario.conform.result", specdot_kind="final", specdot_role="output", specdot_type="type.conform.result", specdot_accounted_by="promise.specdot.conform.result.offer"];
+
+  request -> validate [specdot_id="scenario.flow.conform.request.validate", specdot_kind="step"];
+  validate -> bind [specdot_id="scenario.flow.conform.validate.bind", specdot_kind="step"];
+  bind -> execute [specdot_id="scenario.flow.conform.bind.execute", specdot_kind="step"];
+  execute -> compare [specdot_id="scenario.flow.conform.execute.compare", specdot_kind="step"];
+  compare -> result [specdot_id="scenario.flow.conform.compare.result", specdot_kind="step"];
+}

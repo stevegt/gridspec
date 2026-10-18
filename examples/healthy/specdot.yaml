@@ -1,0 +1,31 @@
+schema: specdot/v1
+module: github.com/promisegrid/specdot/examples/healthy
+roots:
+  - .
+include:
+  - "**/*.dot"
+  - "**/*.md"
+exclude:
+  - "**/testdata/**"
+link_policy:
+  require_backlinks: true
+  allow_remote: false
+  remote_timeout: 5s
+profiles:
+  default:
+    finite:
+      enabled: true
+      required: true
+      max_states: 1000
+      max_depth: 50
+      max_queue: 8
+      max_transitions: 10000
+  build:
+    build_ready: true
+    finite:
+      enabled: true
+      required: true
+      max_states: 10000
+      max_depth: 200
+      max_queue: 16
+      max_transitions: 100000

@@ -1,0 +1,45 @@
+digraph specdot_vet {
+  graph [specdot_version="1", specdot_kind="algorithm", specdot_id="graph.specdot.vet", specdot_depends_on="graph.specdot.interfaces,graph.specdot.data,graph.specdot.effects,graph.specdot.checker", URL="vet.md#vet-pipeline"];
+
+  request [specdot_id="vet.request", specdot_kind="step", specdot_role="input", specdot_type="type.vet.request", specdot_accounted_by="promise.specdot.request.offer"];
+  manifest [specdot_id="vet.resolve.manifest", specdot_kind="decision"];
+  config [specdot_id="vet.load.config", specdot_kind="decision"];
+  profile [specdot_id="vet.select.profile", specdot_kind="decision"];
+  discover [specdot_id="vet.discover.sources", specdot_kind="decision"];
+  parse [specdot_id="vet.parse.sources", specdot_kind="step"];
+  compile [specdot_id="vet.compile.ir", specdot_kind="step"];
+  rules [specdot_id="vet.run.rules", specdot_kind="step"];
+  checker [specdot_id="vet.run.checker", specdot_kind="step"];
+  seal [specdot_id="vet.seal.ir", specdot_kind="decision"];
+  emit_requested [specdot_id="vet.emit.requested", specdot_kind="decision"];
+  emit [specdot_id="vet.emit.ir", specdot_kind="decision"];
+  report [specdot_id="vet.write.report", specdot_kind="decision"];
+  findings [specdot_id="vet.has.errors", specdot_kind="decision"];
+  clean [specdot_id="vet.result.clean", specdot_kind="final", specdot_role="output", specdot_type="type.vet.result", specdot_accounted_by="promise.specdot.result.offer"];
+  invalid [specdot_id="vet.result.findings", specdot_kind="final", specdot_role="output", specdot_type="type.vet.result", specdot_accounted_by="promise.specdot.result.offer"];
+  fatal [specdot_id="vet.result.failure", specdot_kind="final", specdot_role="output", specdot_type="type.vet.result", specdot_accounted_by="promise.specdot.result.offer"];
+
+  request -> manifest [specdot_id="flow.vet.request.manifest", specdot_kind="flow"];
+  manifest -> config [specdot_id="flow.vet.manifest.found", specdot_kind="flow", specdot_branch="found"];
+  manifest -> fatal [specdot_id="flow.vet.manifest.failure", specdot_kind="flow", specdot_branch="failure"];
+  config -> profile [specdot_id="flow.vet.config.loaded", specdot_kind="flow", specdot_branch="loaded"];
+  config -> fatal [specdot_id="flow.vet.config.failure", specdot_kind="flow", specdot_branch="failure"];
+  profile -> discover [specdot_id="flow.vet.profile.selected", specdot_kind="flow", specdot_branch="selected"];
+  profile -> fatal [specdot_id="flow.vet.profile.failure", specdot_kind="flow", specdot_branch="failure"];
+  discover -> parse [specdot_id="flow.vet.sources.discovered", specdot_kind="flow", specdot_branch="discovered"];
+  discover -> fatal [specdot_id="flow.vet.discovery.failure", specdot_kind="flow", specdot_branch="failure"];
+  parse -> compile [specdot_id="flow.vet.parse.compile", specdot_kind="flow"];
+  compile -> rules [specdot_id="flow.vet.compile.rules", specdot_kind="flow"];
+  rules -> checker [specdot_id="flow.vet.rules.checker", specdot_kind="flow"];
+  checker -> seal [specdot_id="flow.vet.checker.seal", specdot_kind="flow"];
+  seal -> emit_requested [specdot_id="flow.vet.seal.success", specdot_kind="flow", specdot_branch="sealed"];
+  seal -> fatal [specdot_id="flow.vet.seal.failure", specdot_kind="flow", specdot_branch="failure"];
+  emit_requested -> emit [specdot_id="flow.vet.emit.yes", specdot_kind="flow", specdot_branch="requested"];
+  emit_requested -> report [specdot_id="flow.vet.emit.no", specdot_kind="flow", specdot_branch="not-requested"];
+  emit -> report [specdot_id="flow.vet.emit.success", specdot_kind="flow", specdot_branch="written"];
+  emit -> fatal [specdot_id="flow.vet.emit.failure", specdot_kind="flow", specdot_branch="failure"];
+  report -> findings [specdot_id="flow.vet.report.success", specdot_kind="flow", specdot_branch="written"];
+  report -> fatal [specdot_id="flow.vet.report.failure", specdot_kind="flow", specdot_branch="failure"];
+  findings -> clean [specdot_id="flow.vet.result.clean", specdot_kind="flow", specdot_branch="no-errors"];
+  findings -> invalid [specdot_id="flow.vet.result.findings", specdot_kind="flow", specdot_branch="errors"];
+}

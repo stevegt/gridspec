@@ -1,0 +1,14 @@
+digraph specdot_scenario_repeat {
+  graph [specdot_version="1", specdot_kind="scenario", specdot_id="scenario.specdot.repeat", specdot_depends_on="graph.specdot.vet,graph.specdot.data", URL="scenarios.md#deterministic-repeat"];
+
+  request [specdot_id="scenario.repeat.request", specdot_kind="step", specdot_role="input", specdot_type="type.vet.request", specdot_accounted_by="promise.specdot.request.offer"];
+  first [specdot_id="scenario.repeat.first", specdot_kind="step"];
+  second [specdot_id="scenario.repeat.second", specdot_kind="step"];
+  compare [specdot_id="scenario.repeat.compare", specdot_kind="step"];
+  result [specdot_id="scenario.repeat.result", specdot_kind="final", specdot_role="output", specdot_type="type.vet.result", specdot_accounted_by="promise.specdot.result.offer"];
+
+  request -> first [specdot_id="scenario.flow.repeat.request.first", specdot_kind="step"];
+  first -> second [specdot_id="scenario.flow.repeat.first.second", specdot_kind="step"];
+  second -> compare [specdot_id="scenario.flow.repeat.second.compare", specdot_kind="step"];
+  compare -> result [specdot_id="scenario.flow.repeat.compare.result", specdot_kind="step"];
+}

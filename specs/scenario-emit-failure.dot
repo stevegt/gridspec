@@ -1,0 +1,14 @@
+digraph specdot_scenario_emit_failure {
+  graph [specdot_version="1", specdot_kind="scenario", specdot_id="scenario.specdot.emit_failure", specdot_depends_on="graph.specdot.vet,graph.specdot.effects", URL="scenarios.md#ir-emission-failure"];
+
+  request [specdot_id="scenario.emit.request", specdot_kind="step", specdot_role="input", specdot_type="type.vet.request", specdot_accounted_by="promise.specdot.request.offer"];
+  seal [specdot_id="scenario.emit.seal", specdot_kind="step"];
+  write [specdot_id="scenario.emit.write", specdot_kind="step"];
+  retain [specdot_id="scenario.emit.retain", specdot_kind="step"];
+  result [specdot_id="scenario.emit.result", specdot_kind="final", specdot_role="output", specdot_type="type.vet.result", specdot_accounted_by="promise.specdot.result.offer"];
+
+  request -> seal [specdot_id="scenario.flow.emit.request.seal", specdot_kind="step"];
+  seal -> write [specdot_id="scenario.flow.emit.seal.write", specdot_kind="step"];
+  write -> retain [specdot_id="scenario.flow.emit.write.retain", specdot_kind="step"];
+  retain -> result [specdot_id="scenario.flow.emit.retain.result", specdot_kind="step"];
+}

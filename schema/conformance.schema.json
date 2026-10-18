@@ -1,0 +1,28 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://promisegrid.github.io/specdot/schema/conformance.schema.json",
+  "title": "specdot conformance report v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema", "module", "implementation", "spec_digest", "evidence", "coverage", "diagnostics"],
+  "properties": {
+    "schema": {"const": "specdot.conformance/v1"},
+    "module": {"type": "string"}, "implementation": {"type": "string"}, "spec_digest": {"type": "string"},
+    "evidence": {"$ref": "#/$defs/evidence"},
+    "coverage": {
+      "type": "object", "additionalProperties": false,
+      "required": ["static", "command", "go_test", "trace"],
+      "properties": {
+        "static": {"$ref": "#/$defs/coverage"}, "command": {"$ref": "#/$defs/coverage"},
+        "go_test": {"$ref": "#/$defs/coverage"}, "trace": {"$ref": "#/$defs/coverage"}
+      }
+    },
+    "exclusions": {"type": "array", "items": {"type": "object", "additionalProperties": false, "required": ["spec_id", "reason"], "properties": {"spec_id": {"type": "string"}, "reason": {"type": "string"}}}},
+    "diagnostics": {"type": "array", "items": {"type": "object"}}
+  },
+  "$defs": {
+    "ids": {"type": "array", "uniqueItems": true, "items": {"type": "string", "minLength": 1}},
+    "evidence": {"type": "object", "additionalProperties": false, "required": ["static", "command", "go_test", "trace"], "properties": {"static": {"$ref": "#/$defs/ids"}, "command": {"$ref": "#/$defs/ids"}, "go_test": {"$ref": "#/$defs/ids"}, "trace": {"$ref": "#/$defs/ids"}}},
+    "coverage": {"type": "object", "additionalProperties": false, "required": ["eligible", "covered", "percent", "floor"], "properties": {"eligible": {"type": "integer"}, "covered": {"type": "integer"}, "percent": {"type": "number"}, "floor": {"type": "number"}}}
+  }
+}

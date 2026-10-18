@@ -8,14 +8,11 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/promisegrid/specdot/internal/checker"
-	"github.com/promisegrid/specdot/internal/compile"
+	"github.com/promisegrid/specdot/conformance/trace"
 	"github.com/promisegrid/specdot/internal/config"
 	"github.com/promisegrid/specdot/internal/diag"
 	"github.com/promisegrid/specdot/internal/model"
 	"github.com/promisegrid/specdot/internal/report"
-	"github.com/promisegrid/specdot/internal/rules"
-	"github.com/promisegrid/specdot/internal/source"
 )
 
 type VetOptions struct {
@@ -27,6 +24,7 @@ type VetOptions struct {
 	Paths      []string
 	Stdout     io.Writer
 	Stderr     io.Writer
+	Trace      trace.Sink
 }
 
 // Vet returns the documented process exit code: 0 clean, 1 findings, 2 usage
@@ -38,7 +36,18 @@ func Vet(opts VetOptions) int {
 	if opts.Stderr == nil {
 		opts.Stderr = os.Stderr
 	}
+	closeTrace := func() error { return nil }
+	if opts.Trace == nil {
+		var err error
+		opts.Trace, closeTrace, err = trace.OpenFromEnv()
+		if err != nil {
+			fmt.Fprintln(opts.Stderr, "specdot vet: trace:", err)
+			return 2
+		}
+	}
+	defer func() { _ = closeTrace() }()
 	manifest := opts.ConfigPath
+	recordTrace(opts.Trace, "vet.resolve.manifest", "enter", "")
 	if manifest == "" {
 		start := "."
 		if len(opts.Paths) > 0 {
@@ -47,62 +56,62 @@ func Vet(opts VetOptions) int {
 		var err error
 		manifest, err = config.Discover(start)
 		if err != nil {
+			recordTrace(opts.Trace, "vet.resolve.manifest", "exit", "failure")
 			fmt.Fprintln(opts.Stderr, "specdot vet:", err)
 			return 2
 		}
 	}
+	recordTrace(opts.Trace, "vet.resolve.manifest", "exit", "success")
+	recordTrace(opts.Trace, "vet.load.config", "enter", "")
 	cfg, err := config.Load(manifest)
 	if err != nil {
+		recordTrace(opts.Trace, "vet.load.config", "exit", "failure")
 		fmt.Fprintln(opts.Stderr, "specdot vet:", err)
 		return 2
 	}
+	recordTrace(opts.Trace, "vet.load.config", "exit", "success")
 	profileName := opts.Profile
 	if profileName == "" {
 		profileName = "default"
 	}
+	recordTrace(opts.Trace, "vet.select.profile", "enter", "")
 	profile, err := cfg.SelectedProfile(profileName)
 	if err != nil {
+		recordTrace(opts.Trace, "vet.select.profile", "exit", "failure")
 		fmt.Fprintln(opts.Stderr, "specdot vet:", err)
 		return 2
 	}
-	files, err := source.Discover(cfg, opts.Paths)
+	recordTrace(opts.Trace, "vet.select.profile", "exit", "success")
+	ir, diagnostics, err := analyzeModule(cfg, profileName, profile, opts.Paths, opts.Online, opts.Trace)
 	if err != nil {
-		fmt.Fprintln(opts.Stderr, "specdot vet:", err)
+		fmt.Fprintln(opts.Stderr, "specdot vet: analyze:", err)
 		return 2
 	}
-	parsed := source.Parse(files)
-	ir := compile.IR(cfg, profileName, parsed)
-	semantic, bindings := rules.Run(rules.Context{
-		IR: &ir, Config: cfg, Profile: profile, Documents: parsed.Documents,
-		RawContracts: parsed.Contracts, Online: opts.Online,
-	})
-	ir.Bindings = bindings
-	runs, checkDS := checker.RunAll(&ir, profile)
-	ir.CheckResult = runs
-	if err := ir.Seal(); err != nil {
-		fmt.Fprintln(opts.Stderr, "specdot vet: seal IR:", err)
-		return 2
-	}
-	diagnostics := append(append(append([]diag.Diagnostic(nil), parsed.Diagnostics...), semantic...), checkDS...)
-	diagnostics = applyProfile(profile, diagnostics)
-	diag.Sort(diagnostics)
 	if opts.EmitIR != "" {
+		recordTrace(opts.Trace, "vet.emit.ir", "enter", "")
 		if err := emitIR(opts.EmitIR, ir, opts.Stdout); err != nil {
+			recordTrace(opts.Trace, "vet.emit.ir", "exit", "failure")
 			fmt.Fprintln(opts.Stderr, "specdot vet: emit IR:", err)
 			return 2
 		}
+		recordTrace(opts.Trace, "vet.emit.ir", "exit", "success")
 	}
 	reportWriter := opts.Stdout
 	if opts.EmitIR == "-" {
 		reportWriter = opts.Stderr
 	}
+	recordTrace(opts.Trace, "vet.write.report", "enter", "")
 	if err := report.Write(reportWriter, opts.Format, cfg.Module, ir.Digest, diagnostics); err != nil {
+		recordTrace(opts.Trace, "vet.write.report", "exit", "failure")
 		fmt.Fprintln(opts.Stderr, "specdot vet: report:", err)
 		return 2
 	}
+	recordTrace(opts.Trace, "vet.write.report", "exit", "success")
 	if diag.HasErrors(diagnostics) {
+		recordTrace(opts.Trace, "vet.has.errors", "observe", "errors")
 		return 1
 	}
+	recordTrace(opts.Trace, "vet.has.errors", "observe", "clean")
 	return 0
 }
 

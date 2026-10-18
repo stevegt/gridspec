@@ -22,6 +22,8 @@ func run(args []string, stdout, stderr io.Writer) int {
 	switch args[0] {
 	case "vet":
 		return runVet(args[1:], stdout, stderr)
+	case "conform":
+		return runConform(args[1:], stdout, stderr)
 	case "version", "--version", "-version":
 		fmt.Fprintln(stdout, "specdot", version)
 		return 0
@@ -33,6 +35,31 @@ func run(args []string, stdout, stderr io.Writer) int {
 		usage(stderr)
 		return 2
 	}
+}
+
+func runConform(args []string, stdout, stderr io.Writer) int {
+	flags := flag.NewFlagSet("specdot conform", flag.ContinueOnError)
+	flags.SetOutput(stderr)
+	var opts app.ConformOptions
+	flags.StringVar(&opts.ConfigPath, "config", "", "spec module manifest (discovered upward by default)")
+	flags.StringVar(&opts.ImplementationPath, "implementation", "", "implementation sidecar (specdot.impl.yaml by default)")
+	flags.StringVar(&opts.Profile, "profile", "", "validation profile (sidecar profile or build by default)")
+	flags.StringVar(&opts.Format, "format", "text", "report format: text or json")
+	flags.StringVar(&opts.EmitBaseline, "emit-baseline", "", "write a reviewed baseline candidate")
+	flags.Usage = func() { conformUsage(flags.Output()) }
+	if err := flags.Parse(args); err != nil {
+		return 2
+	}
+	if len(flags.Args()) != 0 {
+		fmt.Fprintln(stderr, "specdot conform: positional arguments are not supported")
+		return 2
+	}
+	if opts.Format != "text" && opts.Format != "json" {
+		fmt.Fprintf(stderr, "specdot conform: invalid --format %q\n", opts.Format)
+		return 2
+	}
+	opts.Stdout, opts.Stderr = stdout, stderr
+	return app.Conform(opts)
 }
 
 func runVet(args []string, stdout, stderr io.Writer) int {
@@ -101,10 +128,16 @@ func usage(w io.Writer) {
 	fmt.Fprintln(w, "usage: specdot <command> [options]")
 	fmt.Fprintln(w, "commands:")
 	fmt.Fprintln(w, "  vet      compile and validate a spec module")
+	fmt.Fprintln(w, "  conform  compare a spec module with existing Go code")
 	fmt.Fprintln(w, "  version  print the version")
 }
 
 func vetUsage(w io.Writer) {
 	fmt.Fprintln(w, "usage: specdot vet [paths...] [--config specdot.yaml] [--profile name]")
 	fmt.Fprintln(w, "                   [--format text|json|sarif] [--online] [--emit-ir file|-]")
+}
+
+func conformUsage(w io.Writer) {
+	fmt.Fprintln(w, "usage: specdot conform [--config specdot.yaml] [--implementation specdot.impl.yaml]")
+	fmt.Fprintln(w, "                       [--profile name] [--format text|json] [--emit-baseline file]")
 }

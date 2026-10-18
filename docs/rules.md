@@ -6,7 +6,7 @@ same IDs.
 
 | Range | Area | What is checked |
 | --- | --- | --- |
-| `SDV000`–`SDV025` | DOT syntax | A non-empty graph corpus, parseability, semantic graph metadata, directed executable graphs, explicit nodes, one declaration per DOT node, IDs on every node/edge, and unambiguous edge segments. |
+| `SDV000`–`SDV025` | DOT syntax | A non-empty graph corpus, parseability, exactly one top-level graph per file, semantic graph metadata, directed executable graphs, explicit nodes, one declaration per DOT node, IDs on every node/edge, and unambiguous edge segments. |
 | `SDV050`–`SDV055` | Markdown contracts | CommonMark traversal, valid strict YAML, safe YAML features, supported schema, and a `for` target. |
 | `SDV100`–`SDV120` | Linking | Valid globally unique IDs, case collisions, one extension per target, existing contract targets and claims, status/dependency consistency, typed/accounted boundaries, visual-vs-semantic ambiguity, and misspelled semantic attributes. |
 | `SDV130`–`SDV133` | Waivers | Waivability, required risk fields, date format, and expiry. |
@@ -22,6 +22,7 @@ same IDs.
 
 ## Critical examples
 
+- `SDV002`: a DOT file contains zero or multiple top-level graphs.
 - `SDV101`: one semantic ID is declared more than once.
 - `SDV114`: an input/output is not accounted for in another DOT file.
 - `SDV145` / `SDV147`: a linked Markdown file or anchor is missing.
@@ -42,3 +43,9 @@ The safety-critical non-waivable set is defined in
 [`internal/rules/rules.go`](../internal/rules/rules.go). Profile severity
 overrides can disable advisory rules, but they should be reviewed like compiler
 flag changes.
+
+`specdot conform` uses a separate stable `SDCxxx` namespace: `SDC0xx` covers
+sidecar references, `SDC1xx` Go symbols, `SDC2xx` scenario execution, `SDC3xx`
+semantic traces, and `SDC4xx` classification, coverage, exclusions, and
+baseline regressions. Conformance findings are non-waivable because the
+sidecar itself is the reviewed mapping and policy boundary.

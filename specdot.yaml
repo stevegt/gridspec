@@ -1,7 +1,7 @@
 schema: specdot/v1
-module: github.com/promisegrid/specdot/examples/healthy
+module: github.com/promisegrid/specdot
 roots:
-  - examples/healthy
+  - specs
 include:
   - "**/*.dot"
   - "**/*.md"
@@ -22,6 +22,7 @@ profiles:
       max_transitions: 10000
   build:
     build_ready: true
+    warnings_as_errors: true
     finite:
       enabled: true
       required: true

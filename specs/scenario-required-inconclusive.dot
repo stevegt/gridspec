@@ -1,0 +1,14 @@
+digraph specdot_scenario_inconclusive {
+  graph [specdot_version="1", specdot_kind="scenario", specdot_id="scenario.specdot.required_inconclusive", specdot_depends_on="graph.specdot.checker,graph.specdot.vet", URL="scenarios.md#required-inconclusive-check"];
+
+  request [specdot_id="scenario.inconclusive.request", specdot_kind="step", specdot_role="input", specdot_type="type.vet.request", specdot_accounted_by="promise.specdot.request.offer"];
+  explore [specdot_id="scenario.inconclusive.explore", specdot_kind="step"];
+  exhaust [specdot_id="scenario.inconclusive.exhaust", specdot_kind="step"];
+  diagnose [specdot_id="scenario.inconclusive.diagnose", specdot_kind="step"];
+  result [specdot_id="scenario.inconclusive.result", specdot_kind="final", specdot_role="output", specdot_type="type.vet.result", specdot_accounted_by="promise.specdot.result.offer"];
+
+  request -> explore [specdot_id="scenario.flow.inconclusive.request.explore", specdot_kind="step"];
+  explore -> exhaust [specdot_id="scenario.flow.inconclusive.explore.exhaust", specdot_kind="step"];
+  exhaust -> diagnose [specdot_id="scenario.flow.inconclusive.exhaust.diagnose", specdot_kind="step"];
+  diagnose -> result [specdot_id="scenario.flow.inconclusive.diagnose.result", specdot_kind="step"];
+}

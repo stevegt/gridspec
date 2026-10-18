@@ -1,0 +1,14 @@
+digraph specdot_architecture {
+  graph [specdot_version="1", specdot_kind="decision", specdot_id="decision.specdot.bootstrap", specdot_depends_on="graph.specdot.vet,graph.specdot.checker,graph.specdot.conform,scenario.specdot.repeat", URL="architecture.md#bootstrap-and-future-generation"];
+
+  authority [specdot_id="decision.bootstrap.authority", specdot_kind="decision", shape="diamond"];
+  go [specdot_id="decision.bootstrap.go", specdot_kind="outcome"];
+  self_spec [specdot_id="decision.bootstrap.self_spec", specdot_kind="outcome"];
+  conformance [specdot_id="decision.bootstrap.conformance", specdot_kind="outcome"];
+  future [specdot_id="decision.bootstrap.future_build", specdot_kind="outcome"];
+
+  authority -> go [specdot_id="decision.edge.bootstrap.implementation", specdot_kind="decision", specdot_branch="current-implementation"];
+  authority -> self_spec [specdot_id="decision.edge.bootstrap.dogfood", specdot_kind="decision", specdot_branch="current-consistency-gate"];
+  authority -> conformance [specdot_id="decision.edge.bootstrap.conformance", specdot_kind="decision", specdot_branch="current-deterministic-conformance"];
+  authority -> future [specdot_id="decision.edge.bootstrap.generation", specdot_kind="decision", specdot_branch="future-generation"];
+}

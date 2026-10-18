@@ -1,0 +1,14 @@
+digraph specdot_scenario_findings {
+  graph [specdot_version="1", specdot_kind="scenario", specdot_id="scenario.specdot.findings", specdot_depends_on="graph.specdot.vet", URL="scenarios.md#semantic-findings"];
+
+  request [specdot_id="scenario.findings.request", specdot_kind="step", specdot_role="input", specdot_type="type.vet.request", specdot_accounted_by="promise.specdot.request.offer"];
+  parse [specdot_id="scenario.findings.parse", specdot_kind="step"];
+  diagnose [specdot_id="scenario.findings.diagnose", specdot_kind="step"];
+  report [specdot_id="scenario.findings.report", specdot_kind="step"];
+  result [specdot_id="scenario.findings.result", specdot_kind="final", specdot_role="output", specdot_type="type.vet.result", specdot_accounted_by="promise.specdot.result.offer"];
+
+  request -> parse [specdot_id="scenario.flow.findings.request.parse", specdot_kind="step"];
+  parse -> diagnose [specdot_id="scenario.flow.findings.parse.diagnose", specdot_kind="step"];
+  diagnose -> report [specdot_id="scenario.flow.findings.diagnose.report", specdot_kind="step"];
+  report -> result [specdot_id="scenario.flow.findings.report.result", specdot_kind="step"];
+}

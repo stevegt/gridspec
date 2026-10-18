@@ -1,0 +1,39 @@
+digraph specdot_checker {
+  graph [specdot_version="1", specdot_kind="algorithm", specdot_id="graph.specdot.checker", specdot_depends_on="graph.specdot.data", URL="checker.md#finite-checker"];
+
+  input [specdot_id="checker.input.ir", specdot_kind="step", specdot_role="input", specdot_type="type.canonical.ir", specdot_accounted_by="type.canonical.ir"];
+  enumerate [specdot_id="checker.enumerate.machines", specdot_kind="decision"];
+  initialize [specdot_id="checker.initialize.configuration", specdot_kind="step"];
+  support [specdot_id="checker.supported.semantics", specdot_kind="decision"];
+  explore [specdot_id="checker.explore.bfs", specdot_kind="decision"];
+  liveness [specdot_id="checker.analyze.liveness", specdot_kind="decision"];
+  trace [specdot_id="checker.build.shortest.trace", specdot_kind="step"];
+  passed [specdot_id="checker.classify.passed", specdot_kind="step"];
+  violated [specdot_id="checker.classify.violated", specdot_kind="step"];
+  inconclusive [specdot_id="checker.classify.inconclusive", specdot_kind="step"];
+  assumed [specdot_id="checker.classify.assumed", specdot_kind="step"];
+  unchecked [specdot_id="checker.classify.unchecked", specdot_kind="step"];
+  collect [specdot_id="checker.collect.run", specdot_kind="decision"];
+  output [specdot_id="checker.output.runs", specdot_kind="final", specdot_role="output", specdot_type="type.check.run.list", specdot_accounted_by="type.check.run.list"];
+
+  input -> enumerate [specdot_id="flow.checker.input.enumerate", specdot_kind="flow"];
+  enumerate -> unchecked [specdot_id="flow.checker.none", specdot_kind="flow", specdot_branch="no-machines"];
+  enumerate -> initialize [specdot_id="flow.checker.machine", specdot_kind="flow", specdot_branch="machine"];
+  initialize -> support [specdot_id="flow.checker.initialize.support", specdot_kind="flow"];
+  support -> explore [specdot_id="flow.checker.supported", specdot_kind="flow", specdot_branch="supported"];
+  support -> inconclusive [specdot_id="flow.checker.unsupported", specdot_kind="flow", specdot_branch="unsupported"];
+  explore -> trace [specdot_id="flow.checker.safety.violation", specdot_kind="flow", specdot_branch="violation"];
+  explore -> inconclusive [specdot_id="flow.checker.bound", specdot_kind="flow", specdot_branch="bound-exhausted"];
+  explore -> liveness [specdot_id="flow.checker.safety.complete", specdot_kind="flow", specdot_branch="complete"];
+  liveness -> trace [specdot_id="flow.checker.liveness.violation", specdot_kind="flow", specdot_branch="violation"];
+  liveness -> passed [specdot_id="flow.checker.liveness.passed", specdot_kind="flow", specdot_branch="passed"];
+  liveness -> assumed [specdot_id="flow.checker.liveness.assumed", specdot_kind="flow", specdot_branch="assumed"];
+  trace -> violated [specdot_id="flow.checker.trace.violated", specdot_kind="flow"];
+  passed -> collect [specdot_id="flow.checker.passed.collect", specdot_kind="flow"];
+  violated -> collect [specdot_id="flow.checker.violated.collect", specdot_kind="flow"];
+  inconclusive -> collect [specdot_id="flow.checker.inconclusive.collect", specdot_kind="flow"];
+  assumed -> collect [specdot_id="flow.checker.assumed.collect", specdot_kind="flow"];
+  unchecked -> output [specdot_id="flow.checker.unchecked.output", specdot_kind="flow"];
+  collect -> initialize [specdot_id="flow.checker.collect.more", specdot_kind="flow", specdot_branch="more-machines"];
+  collect -> output [specdot_id="flow.checker.collect.done", specdot_kind="flow", specdot_branch="complete"];
+}

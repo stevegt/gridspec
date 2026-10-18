@@ -1,0 +1,15 @@
+digraph specdot_interfaces {
+  graph [specdot_version="1", specdot_kind="promise", specdot_id="graph.specdot.interfaces", URL="interfaces.md#interfaces"];
+
+  operator [specdot_id="agent.operator", specdot_kind="agent"];
+  specdot [specdot_id="agent.specdot", specdot_kind="agent"];
+
+  operator -> specdot [specdot_id="promise.specdot.request.offer", specdot_kind="promise", specdot_polarity="offer", specdot_type="type.vet.request"];
+  specdot -> operator [specdot_id="promise.specdot.request.accept", specdot_kind="promise", specdot_polarity="accept", specdot_type="type.vet.request"];
+  specdot -> operator [specdot_id="promise.specdot.result.offer", specdot_kind="promise", specdot_polarity="offer", specdot_type="type.vet.result"];
+  operator -> specdot [specdot_id="promise.specdot.result.accept", specdot_kind="promise", specdot_polarity="accept", specdot_type="type.vet.result"];
+  operator -> specdot [specdot_id="promise.specdot.conform.request.offer", specdot_kind="promise", specdot_polarity="offer", specdot_type="type.conform.request"];
+  specdot -> operator [specdot_id="promise.specdot.conform.request.accept", specdot_kind="promise", specdot_polarity="accept", specdot_type="type.conform.request"];
+  specdot -> operator [specdot_id="promise.specdot.conform.result.offer", specdot_kind="promise", specdot_polarity="offer", specdot_type="type.conform.result"];
+  operator -> specdot [specdot_id="promise.specdot.conform.result.accept", specdot_kind="promise", specdot_polarity="accept", specdot_type="type.conform.result"];
+}

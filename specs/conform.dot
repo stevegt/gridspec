@@ -1,0 +1,36 @@
+digraph specdot_conform {
+  graph [specdot_version="1", specdot_kind="algorithm", specdot_id="graph.specdot.conform", specdot_depends_on="graph.specdot.interfaces,graph.specdot.data,graph.specdot.effects", URL="conform.md#implementation-conformance"];
+
+  request [specdot_id="conform.request", specdot_kind="step", specdot_role="input", specdot_type="type.conform.request", specdot_accounted_by="promise.specdot.conform.request.offer"];
+  sidecar [specdot_id="conform.load.sidecar", specdot_kind="decision"];
+  vet [specdot_id="conform.vet.specification", specdot_kind="decision"];
+  resolve [specdot_id="conform.resolve.symbols", specdot_kind="decision"];
+  build [specdot_id="conform.build.artifacts", specdot_kind="decision"];
+  scenarios [specdot_id="conform.run.scenarios", specdot_kind="decision"];
+  collect [specdot_id="conform.collect.evidence", specdot_kind="step"];
+  coverage [specdot_id="conform.check.coverage", specdot_kind="decision"];
+  baseline [specdot_id="conform.compare.baseline", specdot_kind="decision"];
+  report [specdot_id="conform.write.report", specdot_kind="decision"];
+  clean [specdot_id="conform.result.clean", specdot_kind="final", specdot_role="output", specdot_type="type.conform.result", specdot_accounted_by="promise.specdot.conform.result.offer"];
+  mismatch [specdot_id="conform.result.mismatch", specdot_kind="final", specdot_role="output", specdot_type="type.conform.result", specdot_accounted_by="promise.specdot.conform.result.offer"];
+  fatal [specdot_id="conform.result.failure", specdot_kind="final", specdot_role="output", specdot_type="type.conform.result", specdot_accounted_by="promise.specdot.conform.result.offer"];
+
+  request -> sidecar [specdot_id="flow.conform.request.sidecar", specdot_kind="flow"];
+  sidecar -> vet [specdot_id="flow.conform.sidecar.loaded", specdot_kind="flow", specdot_branch="loaded"];
+  sidecar -> fatal [specdot_id="flow.conform.sidecar.failure", specdot_kind="flow", specdot_branch="failure"];
+  vet -> resolve [specdot_id="flow.conform.vet.clean", specdot_kind="flow", specdot_branch="clean"];
+  vet -> mismatch [specdot_id="flow.conform.vet.findings", specdot_kind="flow", specdot_branch="findings"];
+  resolve -> build [specdot_id="flow.conform.symbols.resolved", specdot_kind="flow", specdot_branch="resolved"];
+  resolve -> mismatch [specdot_id="flow.conform.symbols.mismatch", specdot_kind="flow", specdot_branch="mismatch"];
+  build -> scenarios [specdot_id="flow.conform.artifacts.built", specdot_kind="flow", specdot_branch="built"];
+  build -> mismatch [specdot_id="flow.conform.artifacts.failure", specdot_kind="flow", specdot_branch="failure"];
+  scenarios -> collect [specdot_id="flow.conform.scenarios.passed", specdot_kind="flow", specdot_branch="passed"];
+  scenarios -> mismatch [specdot_id="flow.conform.scenarios.failed", specdot_kind="flow", specdot_branch="failed"];
+  collect -> coverage [specdot_id="flow.conform.evidence.coverage", specdot_kind="flow"];
+  coverage -> baseline [specdot_id="flow.conform.coverage.met", specdot_kind="flow", specdot_branch="met"];
+  coverage -> mismatch [specdot_id="flow.conform.coverage.missing", specdot_kind="flow", specdot_branch="missing"];
+  baseline -> report [specdot_id="flow.conform.baseline.matched", specdot_kind="flow", specdot_branch="matched-or-emitted"];
+  baseline -> mismatch [specdot_id="flow.conform.baseline.regressed", specdot_kind="flow", specdot_branch="regressed"];
+  report -> clean [specdot_id="flow.conform.report.clean", specdot_kind="flow", specdot_branch="written"];
+  report -> fatal [specdot_id="flow.conform.report.failure", specdot_kind="flow", specdot_branch="failure"];
+}

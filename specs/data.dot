@@ -1,0 +1,53 @@
+digraph specdot_data {
+  graph [specdot_version="1", specdot_kind="data", specdot_id="graph.specdot.data", specdot_depends_on="graph.specdot.interfaces", URL="data.md#data-model"];
+
+  invocation_id [specdot_id="type.invocation.id", specdot_kind="type", specdot_type_kind="newtype", specdot_base="string"];
+  artifact_id [specdot_id="type.artifact.id", specdot_kind="type", specdot_type_kind="newtype", specdot_base="string"];
+  path [specdot_id="type.filesystem.path", specdot_kind="type", specdot_type_kind="newtype", specdot_base="string"];
+  path_list [specdot_id="type.filesystem.path.list", specdot_kind="type", specdot_type_kind="list", specdot_base="type.filesystem.path"];
+  report_format [specdot_id="type.report.format", specdot_kind="type", specdot_type_kind="enum", specdot_values="text,json,sarif"];
+  exit_code [specdot_id="type.exit.code", specdot_kind="type", specdot_type_kind="enum", specdot_values="zero,one,two"];
+
+  source [specdot_id="type.source", specdot_kind="type"];
+  source_list [specdot_id="type.source.list", specdot_kind="type", specdot_type_kind="list", specdot_base="type.source"];
+  parsed [specdot_id="type.parsed.module", specdot_kind="type"];
+  ir_graph [specdot_id="type.ir.graph", specdot_kind="type"];
+  graph_list [specdot_id="type.ir.graph.list", specdot_kind="type", specdot_type_kind="list", specdot_base="type.ir.graph"];
+  contract [specdot_id="type.ir.contract", specdot_kind="type"];
+  contract_list [specdot_id="type.ir.contract.list", specdot_kind="type", specdot_type_kind="list", specdot_base="type.ir.contract"];
+  binding [specdot_id="type.ir.binding", specdot_kind="type"];
+  binding_list [specdot_id="type.ir.binding.list", specdot_kind="type", specdot_type_kind="list", specdot_base="type.ir.binding"];
+  diagnostic [specdot_id="type.diagnostic", specdot_kind="type"];
+  diagnostic_list [specdot_id="type.diagnostic.list", specdot_kind="type", specdot_type_kind="list", specdot_base="type.diagnostic"];
+  check_run [specdot_id="type.check.run", specdot_kind="type"];
+  check_run_list [specdot_id="type.check.run.list", specdot_kind="type", specdot_type_kind="list", specdot_base="type.check.run"];
+  ir [specdot_id="type.canonical.ir", specdot_kind="type"];
+  request [specdot_id="type.vet.request", specdot_kind="type"];
+  result [specdot_id="type.vet.result", specdot_kind="type"];
+  implementation [specdot_id="type.implementation.sidecar", specdot_kind="type"];
+  trace_event [specdot_id="type.conformance.trace.event", specdot_kind="type"];
+  conformance_report [specdot_id="type.conformance.report", specdot_kind="type"];
+  conformance_baseline [specdot_id="type.conformance.baseline", specdot_kind="type"];
+  conform_request [specdot_id="type.conform.request", specdot_kind="type"];
+  conform_result [specdot_id="type.conform.result", specdot_kind="type"];
+
+  module [specdot_id="resource.spec.module", specdot_kind="resource"];
+  remote [specdot_id="resource.remote.markdown", specdot_kind="resource"];
+  ir_output [specdot_id="resource.ir.output", specdot_kind="resource", specdot_logical_id_type="type.artifact.id"];
+  report_stream [specdot_id="resource.report.stream", specdot_kind="resource"];
+  implementation_sidecar [specdot_id="resource.implementation.sidecar", specdot_kind="resource"];
+  go_module [specdot_id="resource.go.module", specdot_kind="resource"];
+  conformance_baseline_output [specdot_id="resource.conformance.baseline", specdot_kind="resource", specdot_logical_id_type="type.artifact.id"];
+
+  module -> source [specdot_id="relationship.module.sources", specdot_kind="relationship", specdot_relation="contains", specdot_cardinality="1..*"];
+  ir -> source_list [specdot_id="relationship.ir.sources", specdot_kind="relationship", specdot_relation="contains", specdot_cardinality="1"];
+  ir -> graph_list [specdot_id="relationship.ir.graphs", specdot_kind="relationship", specdot_relation="contains", specdot_cardinality="1"];
+  ir -> contract_list [specdot_id="relationship.ir.contracts", specdot_kind="relationship", specdot_relation="contains", specdot_cardinality="1"];
+  ir -> binding_list [specdot_id="relationship.ir.bindings", specdot_kind="relationship", specdot_relation="contains", specdot_cardinality="1"];
+  ir -> check_run_list [specdot_id="relationship.ir.checks", specdot_kind="relationship", specdot_relation="contains", specdot_cardinality="1"];
+  ir_output -> ir [specdot_id="relationship.output.ir", specdot_kind="relationship", specdot_relation="contains", specdot_cardinality="1"];
+  report_stream -> diagnostic_list [specdot_id="relationship.report.diagnostics", specdot_kind="relationship", specdot_relation="contains", specdot_cardinality="1"];
+  result -> diagnostic_list [specdot_id="relationship.result.diagnostics", specdot_kind="relationship", specdot_relation="contains", specdot_cardinality="1"];
+  implementation_sidecar -> implementation [specdot_id="relationship.sidecar.implementation", specdot_kind="relationship", specdot_relation="contains", specdot_cardinality="1"];
+  conformance_baseline_output -> conformance_baseline [specdot_id="relationship.baseline.conformance", specdot_kind="relationship", specdot_relation="contains", specdot_cardinality="1"];
+}

@@ -1,0 +1,395 @@
+schema: specdot.implementation/v1
+name: specdot-go
+spec_config: specdot.yaml
+profile: build
+go:
+  module_root: .
+  artifacts:
+    - name: specdot
+      package: ./cmd/specdot
+
+bindings:
+  - {spec_id: graph.specdot.vet, package: github.com/promisegrid/specdot/internal/app, kind: func, name: Vet}
+  - {spec_id: vet.request, package: github.com/promisegrid/specdot/internal/app, kind: type, name: VetOptions}
+  - {spec_id: vet.resolve.manifest, package: github.com/promisegrid/specdot/internal/config, kind: func, name: Discover}
+  - {spec_id: vet.load.config, package: github.com/promisegrid/specdot/internal/config, kind: func, name: Load}
+  - {spec_id: vet.select.profile, package: github.com/promisegrid/specdot/internal/config, kind: method, receiver: Config, name: SelectedProfile}
+  - {spec_id: vet.discover.sources, package: github.com/promisegrid/specdot/internal/source, kind: func, name: Discover}
+  - {spec_id: vet.parse.sources, package: github.com/promisegrid/specdot/internal/source, kind: func, name: Parse}
+  - {spec_id: vet.compile.ir, package: github.com/promisegrid/specdot/internal/compile, kind: func, name: IR}
+  - {spec_id: vet.run.rules, package: github.com/promisegrid/specdot/internal/rules, kind: func, name: Run}
+  - {spec_id: vet.run.checker, package: github.com/promisegrid/specdot/internal/checker, kind: func, name: RunAll}
+  - {spec_id: vet.seal.ir, package: github.com/promisegrid/specdot/internal/model, kind: method, receiver: IR, name: Seal}
+  - {spec_id: vet.emit.ir, package: github.com/promisegrid/specdot/internal/app, kind: func, name: emitIR}
+  - {spec_id: vet.write.report, package: github.com/promisegrid/specdot/internal/report, kind: func, name: Write}
+  - {spec_id: vet.has.errors, package: github.com/promisegrid/specdot/internal/diag, kind: func, name: HasErrors}
+  - {spec_id: type.vet.request, package: github.com/promisegrid/specdot/internal/app, kind: type, name: VetOptions}
+  - {spec_id: type.vet.result, package: github.com/promisegrid/specdot/internal/model, kind: type, name: IR}
+  - {spec_id: graph.specdot.checker, package: github.com/promisegrid/specdot/internal/checker, kind: func, name: RunAll}
+  - {spec_id: checker.initialize.configuration, package: github.com/promisegrid/specdot/internal/checker, kind: func, name: checkMachine}
+  - {spec_id: checker.supported.semantics, package: github.com/promisegrid/specdot/internal/checker, kind: func, name: prepare}
+  - {spec_id: checker.input.ir, package: github.com/promisegrid/specdot/internal/model, kind: type, name: IR}
+  - {spec_id: checker.enumerate.machines, package: github.com/promisegrid/specdot/internal/checker, kind: func, name: RunAll}
+  - {spec_id: checker.explore.bfs, package: github.com/promisegrid/specdot/internal/checker, kind: func, name: checkMachine}
+  - {spec_id: checker.analyze.liveness, package: github.com/promisegrid/specdot/internal/checker, kind: func, name: livenessCounterexample}
+  - {spec_id: checker.build.shortest.trace, package: github.com/promisegrid/specdot/internal/checker, kind: func, name: buildTrace}
+  - {spec_id: checker.classify.passed, package: github.com/promisegrid/specdot/internal/checker, kind: func, name: RunAll}
+  - {spec_id: checker.classify.violated, package: github.com/promisegrid/specdot/internal/checker, kind: func, name: RunAll}
+  - {spec_id: checker.classify.inconclusive, package: github.com/promisegrid/specdot/internal/checker, kind: func, name: RunAll}
+  - {spec_id: checker.classify.assumed, package: github.com/promisegrid/specdot/internal/checker, kind: func, name: RunAll}
+  - {spec_id: checker.classify.unchecked, package: github.com/promisegrid/specdot/internal/checker, kind: func, name: RunAll}
+  - {spec_id: checker.collect.run, package: github.com/promisegrid/specdot/internal/checker, kind: func, name: RunAll}
+  - {spec_id: checker.output.runs, package: github.com/promisegrid/specdot/internal/model, kind: type, name: CheckRun}
+  - {spec_id: graph.specdot.data, package: github.com/promisegrid/specdot/internal/model, kind: package}
+  - {spec_id: type.source, package: github.com/promisegrid/specdot/internal/model, kind: type, name: Source}
+  - {spec_id: type.ir.graph, package: github.com/promisegrid/specdot/internal/model, kind: type, name: Graph}
+  - {spec_id: type.ir.contract, package: github.com/promisegrid/specdot/internal/model, kind: type, name: Contract}
+  - {spec_id: type.ir.binding, package: github.com/promisegrid/specdot/internal/model, kind: type, name: Binding}
+  - {spec_id: type.diagnostic, package: github.com/promisegrid/specdot/internal/diag, kind: type, name: Diagnostic}
+  - {spec_id: type.check.run, package: github.com/promisegrid/specdot/internal/model, kind: type, name: CheckRun}
+  - {spec_id: type.canonical.ir, package: github.com/promisegrid/specdot/internal/model, kind: type, name: IR}
+  - {spec_id: graph.specdot.conform, package: github.com/promisegrid/specdot/internal/app, kind: func, name: Conform}
+  - {spec_id: conform.request, package: github.com/promisegrid/specdot/internal/app, kind: type, name: ConformOptions}
+  - {spec_id: conform.load.sidecar, package: github.com/promisegrid/specdot/internal/conform, kind: func, name: Load}
+  - {spec_id: conform.vet.specification, package: github.com/promisegrid/specdot/internal/app, kind: func, name: analyzeModule}
+  - {spec_id: conform.resolve.symbols, package: github.com/promisegrid/specdot/internal/conform, kind: func, name: resolveBindings}
+  - {spec_id: conform.build.artifacts, package: github.com/promisegrid/specdot/internal/conform, kind: func, name: buildArtifacts}
+  - {spec_id: conform.run.scenarios, package: github.com/promisegrid/specdot/internal/conform, kind: func, name: runScenarios}
+  - {spec_id: conform.collect.evidence, package: github.com/promisegrid/specdot/internal/conform, kind: func, name: Run}
+  - {spec_id: conform.check.coverage, package: github.com/promisegrid/specdot/internal/conform, kind: func, name: Run}
+  - {spec_id: conform.compare.baseline, package: github.com/promisegrid/specdot/internal/conform, kind: func, name: compareBaseline}
+  - {spec_id: conform.write.report, package: github.com/promisegrid/specdot/internal/conform, kind: func, name: WriteReport}
+  - {spec_id: type.implementation.sidecar, package: github.com/promisegrid/specdot/internal/conform, kind: type, name: Config}
+  - {spec_id: type.conformance.trace.event, package: github.com/promisegrid/specdot/conformance/trace, kind: type, name: Event}
+  - {spec_id: type.conformance.report, package: github.com/promisegrid/specdot/internal/conform, kind: type, name: Report}
+  - {spec_id: type.conformance.baseline, package: github.com/promisegrid/specdot/internal/conform, kind: type, name: Baseline}
+  - {spec_id: type.conform.request, package: github.com/promisegrid/specdot/internal/app, kind: type, name: ConformOptions}
+  - {spec_id: type.conform.result, package: github.com/promisegrid/specdot/internal/conform, kind: type, name: Report}
+  - {spec_id: resource.spec.module, package: github.com/promisegrid/specdot/internal/config, kind: type, name: Config}
+  - {spec_id: resource.remote.markdown, package: github.com/promisegrid/specdot/internal/source, kind: type, name: Document}
+  - {spec_id: resource.ir.output, package: github.com/promisegrid/specdot/internal/model, kind: type, name: IR}
+  - {spec_id: resource.report.stream, package: github.com/promisegrid/specdot/internal/report, kind: package}
+  - {spec_id: resource.implementation.sidecar, package: github.com/promisegrid/specdot/internal/conform, kind: type, name: Config}
+  - {spec_id: resource.go.module, package: golang.org/x/tools/go/packages, kind: type, name: Package}
+  - {spec_id: resource.conformance.baseline, package: github.com/promisegrid/specdot/internal/conform, kind: type, name: Baseline}
+  - {spec_id: graph.specdot.effects, package: github.com/promisegrid/specdot/internal/app, kind: package}
+  - {spec_id: graph.specdot.interfaces, package: github.com/promisegrid/specdot/internal/app, kind: package}
+  - {spec_id: machine.specdot.vet, package: github.com/promisegrid/specdot/internal/app, kind: func, name: Vet}
+  - {spec_id: vet.emit.requested, package: github.com/promisegrid/specdot/internal/app, kind: type, name: VetOptions}
+  - {spec_id: vet.result.clean, package: github.com/promisegrid/specdot/internal/app, kind: func, name: Vet}
+  - {spec_id: vet.result.findings, package: github.com/promisegrid/specdot/internal/app, kind: func, name: Vet}
+  - {spec_id: vet.result.failure, package: github.com/promisegrid/specdot/internal/app, kind: func, name: Vet}
+  - {spec_id: conform.result.clean, package: github.com/promisegrid/specdot/internal/app, kind: func, name: Conform}
+  - {spec_id: conform.result.mismatch, package: github.com/promisegrid/specdot/internal/app, kind: func, name: Conform}
+  - {spec_id: conform.result.failure, package: github.com/promisegrid/specdot/internal/app, kind: func, name: Conform}
+  - {spec_id: effect.specdot.read.module, package: github.com/promisegrid/specdot/internal/source, kind: func, name: Discover}
+  - {spec_id: effect.specdot.probe.remote, package: github.com/promisegrid/specdot/internal/rules, kind: func, name: probeURL}
+  - {spec_id: effect.specdot.read.implementation, package: github.com/promisegrid/specdot/internal/conform, kind: func, name: Load}
+  - {spec_id: effect.specdot.execute.implementation, package: github.com/promisegrid/specdot/internal/conform, kind: func, name: runScenarios}
+  - {spec_id: effect.specdot.replace.ir, package: github.com/promisegrid/specdot/internal/app, kind: func, name: emitIR}
+  - {spec_id: effect.specdot.replace.baseline, package: github.com/promisegrid/specdot/internal/conform, kind: func, name: WriteBaseline}
+  - {spec_id: effect.specdot.write.report, package: github.com/promisegrid/specdot/internal/report, kind: func, name: Write}
+
+scenarios:
+  - spec_id: scenario.specdot.clean
+    covers:
+      - scenario.clean.request
+      - scenario.clean.load
+      - scenario.clean.validate
+      - scenario.clean.report
+      - scenario.clean.result
+      - scenario.flow.clean.request.load
+      - scenario.flow.clean.load.validate
+      - scenario.flow.clean.validate.report
+      - scenario.flow.clean.report.result
+    command:
+      artifact: specdot
+      fixture: examples/healthy
+      args: [vet, --config, specdot.yaml, --profile, build]
+      timeout: 30s
+    expect:
+      exit_code: 0
+      stdout: {contains: ["0 error(s), 0 warning(s), 0 note(s)"]}
+      stderr: {empty: true}
+    trace:
+      ordered:
+        - {spec_id: vet.resolve.manifest, phase: enter}
+        - {spec_id: vet.load.config, phase: exit, outcome: success}
+        - {spec_id: vet.select.profile, phase: exit, outcome: success}
+        - {spec_id: vet.discover.sources, phase: exit, outcome: success}
+        - {spec_id: vet.parse.sources, phase: exit, outcome: success}
+        - {spec_id: vet.compile.ir, phase: exit, outcome: success}
+        - {spec_id: vet.run.rules, phase: exit, outcome: success}
+        - {spec_id: vet.run.checker, phase: exit, outcome: success}
+        - {spec_id: vet.seal.ir, phase: exit, outcome: success}
+        - {spec_id: vet.write.report, phase: exit, outcome: success}
+        - {spec_id: vet.has.errors, phase: observe, outcome: clean}
+
+  - spec_id: scenario.specdot.findings
+    covers:
+      - scenario.findings.request
+      - scenario.findings.parse
+      - scenario.findings.diagnose
+      - scenario.findings.report
+      - scenario.findings.result
+      - scenario.flow.findings.request.parse
+      - scenario.flow.findings.parse.diagnose
+      - scenario.flow.findings.diagnose.report
+      - scenario.flow.findings.report.result
+    command:
+      artifact: specdot
+      fixture: testdata/car-misfire
+      args: [vet, --config, specdot.yaml]
+      timeout: 30s
+    expect:
+      exit_code: 1
+      stdout: {contains: [SDV411, SDV520, SDV521]}
+      stderr: {empty: true}
+
+  - spec_id: scenario.specdot.config_failure
+    covers:
+      - scenario.config.request
+      - scenario.config.load
+      - scenario.config.stderr
+      - scenario.config.result
+      - scenario.flow.config.request.load
+      - scenario.flow.config.load.stderr
+      - scenario.flow.config.stderr.result
+    command:
+      artifact: specdot
+      fixture: examples/healthy
+      args: [vet, --config, missing.yaml]
+      timeout: 30s
+    expect:
+      exit_code: 2
+      stderr: {contains: ["specdot vet:"]}
+
+  - spec_id: scenario.specdot.emit_failure
+    covers:
+      - scenario.emit.request
+      - scenario.emit.seal
+      - scenario.emit.write
+      - scenario.emit.retain
+      - scenario.emit.result
+      - scenario.flow.emit.request.seal
+      - scenario.flow.emit.seal.write
+      - scenario.flow.emit.write.retain
+      - scenario.flow.emit.retain.result
+    command:
+      artifact: specdot
+      fixture: examples/healthy
+      args: [vet, --config, specdot.yaml, --emit-ir, .]
+      timeout: 30s
+    expect:
+      exit_code: 2
+      stderr: {contains: ["specdot vet: emit IR:"]}
+
+  - spec_id: scenario.specdot.required_inconclusive
+    covers:
+      - scenario.inconclusive.request
+      - scenario.inconclusive.explore
+      - scenario.inconclusive.exhaust
+      - scenario.inconclusive.diagnose
+      - scenario.inconclusive.result
+      - scenario.flow.inconclusive.request.explore
+      - scenario.flow.inconclusive.explore.exhaust
+      - scenario.flow.inconclusive.exhaust.diagnose
+      - scenario.flow.inconclusive.diagnose.result
+    go_test:
+      package: ./internal/checker
+      test: TestRequiredHistorySemanticsAreInconclusive
+      timeout: 30s
+
+  - spec_id: scenario.specdot.repeat
+    covers:
+      - scenario.repeat.request
+      - scenario.repeat.first
+      - scenario.repeat.second
+      - scenario.repeat.compare
+      - scenario.repeat.result
+      - scenario.flow.repeat.request.first
+      - scenario.flow.repeat.first.second
+      - scenario.flow.repeat.second.compare
+      - scenario.flow.repeat.compare.result
+    go_test:
+      package: ./internal/app
+      test: TestEmittedIRIsDeterministic
+      timeout: 30s
+
+  - spec_id: scenario.specdot.conform.clean
+    covers:
+      - scenario.conform.request
+      - scenario.conform.validate.spec
+      - scenario.conform.resolve.bindings
+      - scenario.conform.execute.scenarios
+      - scenario.conform.compare.coverage
+      - scenario.conform.result
+      - scenario.flow.conform.request.validate
+      - scenario.flow.conform.validate.bind
+      - scenario.flow.conform.bind.execute
+      - scenario.flow.conform.execute.compare
+      - scenario.flow.conform.compare.result
+    go_test:
+      package: ./internal/conform
+      test: TestRunRequiresEvidenceOrExplicitExclusion
+      timeout: 30s
+
+exclusions:
+  - reason: Architecture decisions constrain the implementation but intentionally have no one-to-one Go object.
+    spec_ids:
+      - decision.specdot.bootstrap
+      - decision.bootstrap.authority
+      - decision.bootstrap.go
+      - decision.bootstrap.self_spec
+      - decision.bootstrap.conformance
+      - decision.bootstrap.future_build
+      - decision.edge.bootstrap.implementation
+      - decision.edge.bootstrap.dogfood
+      - decision.edge.bootstrap.conformance
+      - decision.edge.bootstrap.generation
+
+  - reason: Checker flow edges are internal branches covered through bound checker functions and focused tests rather than standalone symbols.
+    spec_ids:
+      - flow.checker.input.enumerate
+      - flow.checker.none
+      - flow.checker.machine
+      - flow.checker.initialize.support
+      - flow.checker.supported
+      - flow.checker.unsupported
+      - flow.checker.safety.violation
+      - flow.checker.bound
+      - flow.checker.safety.complete
+      - flow.checker.liveness.violation
+      - flow.checker.liveness.passed
+      - flow.checker.liveness.assumed
+      - flow.checker.trace.violated
+      - flow.checker.passed.collect
+      - flow.checker.violated.collect
+      - flow.checker.inconclusive.collect
+      - flow.checker.assumed.collect
+      - flow.checker.unchecked.output
+      - flow.checker.collect.more
+      - flow.checker.collect.done
+
+  - reason: Conformance flow edges describe branch semantics implemented inside the bound orchestration functions and exercised by engine tests.
+    spec_ids:
+      - flow.conform.request.sidecar
+      - flow.conform.sidecar.loaded
+      - flow.conform.sidecar.failure
+      - flow.conform.vet.clean
+      - flow.conform.vet.findings
+      - flow.conform.symbols.resolved
+      - flow.conform.symbols.mismatch
+      - flow.conform.artifacts.built
+      - flow.conform.artifacts.failure
+      - flow.conform.scenarios.passed
+      - flow.conform.scenarios.failed
+      - flow.conform.evidence.coverage
+      - flow.conform.coverage.met
+      - flow.conform.coverage.missing
+      - flow.conform.baseline.matched
+      - flow.conform.baseline.regressed
+      - flow.conform.report.clean
+      - flow.conform.report.failure
+
+  - reason: These nominal scalar and collection declarations currently use Go primitives or slices and therefore have no stable named Go object.
+    spec_ids:
+      - type.invocation.id
+      - type.artifact.id
+      - type.filesystem.path
+      - type.filesystem.path.list
+      - type.report.format
+      - type.exit.code
+      - type.source.list
+      - type.parsed.module
+      - type.ir.graph.list
+      - type.ir.contract.list
+      - type.ir.binding.list
+      - type.diagnostic.list
+      - type.check.run.list
+
+  - reason: Data relationships are structural IR constraints verified by vet and do not correspond to standalone implementation symbols.
+    spec_ids:
+      - relationship.module.sources
+      - relationship.ir.sources
+      - relationship.ir.graphs
+      - relationship.ir.contracts
+      - relationship.ir.bindings
+      - relationship.ir.checks
+      - relationship.output.ir
+      - relationship.report.diagnostics
+      - relationship.result.diagnostics
+      - relationship.sidecar.implementation
+      - relationship.baseline.conformance
+
+  - reason: Promise and agent declarations specify the operator protocol and authority boundary rather than in-process Go objects.
+    spec_ids:
+      - agent.operator
+      - agent.specdot
+      - promise.specdot.request.offer
+      - promise.specdot.request.accept
+      - promise.specdot.result.offer
+      - promise.specdot.result.accept
+      - promise.specdot.conform.request.offer
+      - promise.specdot.conform.request.accept
+      - promise.specdot.conform.result.offer
+      - promise.specdot.conform.result.accept
+
+  - reason: Lifecycle states and transitions are an abstract finite model; runtime pipeline steps are traced separately with vet semantic IDs.
+    spec_ids:
+      - state.vet.idle
+      - state.vet.loading
+      - state.vet.analyzing
+      - state.vet.sealing
+      - state.vet.emitting
+      - state.vet.reporting
+      - state.vet.clean
+      - state.vet.findings
+      - state.vet.failed
+      - transition.vet.start
+      - transition.vet.loaded
+      - transition.vet.load.failure
+      - transition.vet.analyzed
+      - transition.vet.emit.requested
+      - transition.vet.emit.skipped
+      - transition.vet.seal.failure
+      - transition.vet.emit.success
+      - transition.vet.emit.failure
+      - transition.vet.report.clean
+      - transition.vet.report.findings
+      - transition.vet.report.failure
+
+  - reason: Vet flow edges are branch relationships inside the bound pipeline; node-level static and runtime trace evidence is the stable implementation seam.
+    spec_ids:
+      - flow.vet.request.manifest
+      - flow.vet.manifest.found
+      - flow.vet.manifest.failure
+      - flow.vet.config.loaded
+      - flow.vet.config.failure
+      - flow.vet.profile.selected
+      - flow.vet.profile.failure
+      - flow.vet.sources.discovered
+      - flow.vet.discovery.failure
+      - flow.vet.parse.compile
+      - flow.vet.compile.rules
+      - flow.vet.rules.checker
+      - flow.vet.checker.seal
+      - flow.vet.seal.success
+      - flow.vet.seal.failure
+      - flow.vet.emit.yes
+      - flow.vet.emit.no
+      - flow.vet.emit.success
+      - flow.vet.emit.failure
+      - flow.vet.report.success
+      - flow.vet.report.failure
+      - flow.vet.result.clean
+      - flow.vet.result.findings
+
+coverage:
+  baseline: specs/specdot.conformance-baseline.json
+  floors:
+    static: 53
+    command: 25
+    go_test: 21
+    trace: 7
+  max_exclusions: 126

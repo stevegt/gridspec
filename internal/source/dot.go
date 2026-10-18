@@ -12,12 +12,30 @@ import (
 )
 
 func parseDOT(f File) ([]model.Graph, []diag.Diagnostic) {
+	if len(bytes.TrimSpace(f.Data)) == 0 {
+		return nil, []diag.Diagnostic{{
+			Rule: "SDV002", Severity: diag.SeverityError,
+			Message:  "DOT file must contain exactly one top-level graph; found 0",
+			Location: diag.Location{File: f.Rel, Line: 1, Column: 1},
+			Help:     "add one graph or digraph, or remove the empty .dot file",
+			Waivable: false,
+		}}
+	}
 	file, err := dot.Parse(bytes.NewReader(f.Data))
 	if err != nil {
 		return nil, []diag.Diagnostic{{
 			Rule: "SDV001", Severity: diag.SeverityError,
 			Message:  "invalid DOT syntax: " + err.Error(),
 			Location: diag.Location{File: f.Rel, Line: 1, Column: 1}, Waivable: false,
+		}}
+	}
+	if len(file.Graphs) != 1 {
+		return nil, []diag.Diagnostic{{
+			Rule: "SDV002", Severity: diag.SeverityError,
+			Message:  fmt.Sprintf("DOT file must contain exactly one top-level graph; found %d", len(file.Graphs)),
+			Location: diag.Location{File: f.Rel, Line: 1, Column: 1},
+			Help:     "split each graph or digraph into its own .dot file",
+			Waivable: false,
 		}}
 	}
 	idx := newLineIndex(f.Rel, f.Data)

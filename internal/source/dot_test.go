@@ -2,7 +2,45 @@ package source
 
 import (
 	"testing"
+
+	"github.com/promisegrid/specdot/internal/diag"
 )
+
+func TestDOTFileContainsExactlyOneGraph(t *testing.T) {
+	tests := []struct {
+		name string
+		data string
+		want int
+	}{
+		{name: "empty", data: "", want: 0},
+		{name: "one", data: `digraph G { graph [specdot_version="1", specdot_kind="algorithm", specdot_id="graph.one"]; }`, want: 1},
+		{name: "two", data: "digraph A {}\ndigraph B {}", want: 0},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			graphs, diagnostics := parseDOT(File{Rel: "test.dot", Kind: "dot", Data: []byte(tt.data)})
+			if len(graphs) != tt.want {
+				t.Fatalf("len(graphs) = %d, want %d", len(graphs), tt.want)
+			}
+			if tt.name == "one" {
+				if hasDiagnostic(diagnostics, "SDV002") {
+					t.Fatalf("unexpected SDV002: %#v", diagnostics)
+				}
+			} else if !hasDiagnostic(diagnostics, "SDV002") {
+				t.Fatalf("expected SDV002, got %#v", diagnostics)
+			}
+		})
+	}
+}
+
+func hasDiagnostic(ds []diag.Diagnostic, rule string) bool {
+	for _, d := range ds {
+		if d.Rule == rule {
+			return true
+		}
+	}
+	return false
+}
 
 func TestDOTParserPreservesRepeatedDeclarations(t *testing.T) {
 	data := []byte(`digraph G {

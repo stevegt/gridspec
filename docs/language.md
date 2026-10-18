@@ -54,6 +54,11 @@ Every graph, node, and edge has a module-wide semantic ID. Prefer
 `specdot_id`; `id` is accepted for compatibility. DOT identifiers are only
 local parser handles and are never used to link specifications.
 
+Each `.dot` file contains exactly one top-level `graph` or `digraph`. Although
+some Graphviz parsers accept a stream of graphs, common tools such as xdot open
+one graph document at a time; multiple top-level graphs are rejected by
+`SDV002` and must be split into separate files.
+
 ```dot
 digraph worker {
   graph [specdot_version="1", specdot_kind="machine",
@@ -369,3 +374,22 @@ effective contracts, derived promise bindings, finite-check results, traces,
 and a SHA-256 content digest. Ordering is normalized before hashing. This is the
 only intended input to future `specdot build`; generators should not reinterpret
 DOT or Markdown independently.
+
+## Existing implementation conformance
+
+`specdot conform` consumes the same vetted IR plus a separate strict
+`specdot.implementation/v1` sidecar. The sidecar names stable Go objects,
+trusted command fixtures, exact Go tests, semantic trace expectations,
+explicit exclusions, coverage floors, and a checked-in baseline. Go-specific
+names never enter DOT or Markdown.
+
+Command scenarios build named artifacts once and execute argv directly without
+a shell in copied fixture directories. Go-test scenarios must observe the exact
+named test; a package-level pass with no matching test is not evidence. Trace
+events are deterministic `specdot.trace/v1` NDJSON records and may only name
+semantic IDs present in the vetted IR.
+
+Every active graph, node, and edge must have at least one evidence class or an
+explicit exclusion with rationale. Normal runs preserve every baseline evidence
+class and reject new exclusions. `--emit-baseline` creates a candidate for
+review but does not make a failing normal run pass.

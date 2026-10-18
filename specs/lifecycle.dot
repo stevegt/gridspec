@@ -1,0 +1,26 @@
+digraph specdot_lifecycle {
+  graph [specdot_version="1", specdot_kind="machine", specdot_id="machine.specdot.vet", specdot_agent="agent.specdot", specdot_semantics="run-to-completion", specdot_accepts="Start,Advance", specdot_depends_on="graph.specdot.interfaces,graph.specdot.data,graph.specdot.vet", URL="lifecycle.md#invocation-lifecycle"];
+
+  idle [specdot_id="state.vet.idle", specdot_kind="state", specdot_initial="true", specdot_ignore="Advance"];
+  loading [specdot_id="state.vet.loading", specdot_kind="state", specdot_refuse="Start"];
+  analyzing [specdot_id="state.vet.analyzing", specdot_kind="state", specdot_refuse="Start"];
+  sealing [specdot_id="state.vet.sealing", specdot_kind="state", specdot_refuse="Start"];
+  emitting [specdot_id="state.vet.emitting", specdot_kind="state", specdot_refuse="Start"];
+  reporting [specdot_id="state.vet.reporting", specdot_kind="state", specdot_refuse="Start"];
+  clean [specdot_id="state.vet.clean", specdot_kind="final", specdot_final="true", specdot_ignore="Start,Advance"];
+  findings [specdot_id="state.vet.findings", specdot_kind="final", specdot_final="true", specdot_ignore="Start,Advance"];
+  failed [specdot_id="state.vet.failed", specdot_kind="final", specdot_final="true", specdot_ignore="Start,Advance"];
+
+  idle -> loading [specdot_id="transition.vet.start", specdot_kind="transition", specdot_event="Start"];
+  loading -> analyzing [specdot_id="transition.vet.loaded", specdot_kind="transition", specdot_event="Advance", specdot_nondeterministic="true"];
+  loading -> failed [specdot_id="transition.vet.load.failure", specdot_kind="transition", specdot_event="Advance", specdot_nondeterministic="true"];
+  analyzing -> sealing [specdot_id="transition.vet.analyzed", specdot_kind="transition", specdot_event="Advance"];
+  sealing -> emitting [specdot_id="transition.vet.emit.requested", specdot_kind="transition", specdot_event="Advance", specdot_nondeterministic="true"];
+  sealing -> reporting [specdot_id="transition.vet.emit.skipped", specdot_kind="transition", specdot_event="Advance", specdot_nondeterministic="true"];
+  sealing -> failed [specdot_id="transition.vet.seal.failure", specdot_kind="transition", specdot_event="Advance", specdot_nondeterministic="true"];
+  emitting -> reporting [specdot_id="transition.vet.emit.success", specdot_kind="transition", specdot_event="Advance", specdot_nondeterministic="true"];
+  emitting -> failed [specdot_id="transition.vet.emit.failure", specdot_kind="transition", specdot_event="Advance", specdot_nondeterministic="true"];
+  reporting -> clean [specdot_id="transition.vet.report.clean", specdot_kind="transition", specdot_event="Advance", specdot_nondeterministic="true"];
+  reporting -> findings [specdot_id="transition.vet.report.findings", specdot_kind="transition", specdot_event="Advance", specdot_nondeterministic="true"];
+  reporting -> failed [specdot_id="transition.vet.report.failure", specdot_kind="transition", specdot_event="Advance", specdot_nondeterministic="true"];
+}

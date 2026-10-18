@@ -100,3 +100,24 @@ func TestParallelRegionsProduceAtomicBatch(t *testing.T) {
 		t.Fatalf("batches = %#v", batches)
 	}
 }
+
+func TestRequiredHistorySemanticsAreInconclusive(t *testing.T) {
+	loc := model.Location{File: "history.dot", Line: 1, Column: 1}
+	graph := model.Graph{
+		ID: "machine.history", Kind: "machine", Status: "active", Directed: true, Location: loc,
+		Nodes: []model.Element{
+			{ID: "state.history.start", GraphID: "machine.history", Element: "node", Kind: "state", Status: "active", Attrs: map[string]string{"specdot_initial": "true"}, Location: loc},
+			{ID: "state.history.saved", GraphID: "machine.history", Element: "node", Kind: "history", Status: "active", Attrs: map[string]string{}, Location: loc},
+		},
+	}
+	contract := model.Contract{Schema: "specdot.contract/v1", For: graph.ID, Kind: "machine", Location: loc, Machine: &model.MachineContract{Agent: "agent.test"}}
+	ir := model.IR{Schema: model.IRSchema, Module: "test", Profile: "build", Graphs: []model.Graph{graph}, Contracts: []model.Contract{contract}}
+	profile := config.Profile{Finite: config.FiniteProfile{Enabled: true, Required: true, MaxStates: 20, MaxDepth: 10, MaxQueue: 4, MaxTransitions: 20}}
+	runs, diagnostics := RunAll(&ir, profile)
+	if len(runs) != 1 || runs[0].Status != "inconclusive" {
+		t.Fatalf("runs = %#v", runs)
+	}
+	if len(diagnostics) != 1 || diagnostics[0].Rule != "SDV701" || diagnostics[0].Severity != "error" {
+		t.Fatalf("diagnostics = %#v", diagnostics)
+	}
+}

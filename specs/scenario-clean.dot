@@ -1,0 +1,14 @@
+digraph specdot_scenario_clean {
+  graph [specdot_version="1", specdot_kind="scenario", specdot_id="scenario.specdot.clean", specdot_depends_on="graph.specdot.vet,machine.specdot.vet", URL="scenarios.md#clean-validation"];
+
+  request [specdot_id="scenario.clean.request", specdot_kind="step", specdot_role="input", specdot_type="type.vet.request", specdot_accounted_by="promise.specdot.request.offer"];
+  load [specdot_id="scenario.clean.load", specdot_kind="step"];
+  validate [specdot_id="scenario.clean.validate", specdot_kind="step"];
+  report [specdot_id="scenario.clean.report", specdot_kind="step"];
+  result [specdot_id="scenario.clean.result", specdot_kind="final", specdot_role="output", specdot_type="type.vet.result", specdot_accounted_by="promise.specdot.result.offer"];
+
+  request -> load [specdot_id="scenario.flow.clean.request.load", specdot_kind="step"];
+  load -> validate [specdot_id="scenario.flow.clean.load.validate", specdot_kind="step"];
+  validate -> report [specdot_id="scenario.flow.clean.validate.report", specdot_kind="step"];
+  report -> result [specdot_id="scenario.flow.clean.report.result", specdot_kind="step"];
+}

@@ -1,0 +1,19 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://promisegrid.github.io/specdot/schema/conformance-baseline.schema.json",
+  "title": "specdot conformance baseline v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema", "module", "implementation", "spec_digest", "evidence"],
+  "properties": {
+    "schema": {"const": "specdot.conformance-baseline/v1"},
+    "module": {"type": "string"}, "implementation": {"type": "string"}, "spec_digest": {"type": "string"},
+    "evidence": {"type": "object", "additionalProperties": false, "required": ["static", "command", "go_test", "trace"], "properties": {
+      "static": {"type": "array", "uniqueItems": true, "items": {"type": "string", "minLength": 1}},
+      "command": {"type": "array", "uniqueItems": true, "items": {"type": "string", "minLength": 1}},
+      "go_test": {"type": "array", "uniqueItems": true, "items": {"type": "string", "minLength": 1}},
+      "trace": {"type": "array", "uniqueItems": true, "items": {"type": "string", "minLength": 1}}
+    }},
+    "exclusions": {"type": "array", "uniqueItems": true, "items": {"type": "string", "minLength": 1}}
+  }
+}

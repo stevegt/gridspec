@@ -1,0 +1,12 @@
+digraph specdot_scenario_config_failure {
+  graph [specdot_version="1", specdot_kind="scenario", specdot_id="scenario.specdot.config_failure", specdot_depends_on="graph.specdot.vet", URL="scenarios.md#configuration-failure"];
+
+  request [specdot_id="scenario.config.request", specdot_kind="step", specdot_role="input", specdot_type="type.vet.request", specdot_accounted_by="promise.specdot.request.offer"];
+  load [specdot_id="scenario.config.load", specdot_kind="step"];
+  stderr [specdot_id="scenario.config.stderr", specdot_kind="step"];
+  result [specdot_id="scenario.config.result", specdot_kind="final", specdot_role="output", specdot_type="type.vet.result", specdot_accounted_by="promise.specdot.result.offer"];
+
+  request -> load [specdot_id="scenario.flow.config.request.load", specdot_kind="step"];
+  load -> stderr [specdot_id="scenario.flow.config.load.stderr", specdot_kind="step"];
+  stderr -> result [specdot_id="scenario.flow.config.stderr.result", specdot_kind="step"];
+}

@@ -1,0 +1,113 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://promisegrid.github.io/specdot/schema/implementation.schema.json",
+  "title": "specdot implementation sidecar v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema", "name", "go", "coverage"],
+  "properties": {
+    "schema": {"const": "specdot.implementation/v1"},
+    "name": {"type": "string", "minLength": 1},
+    "spec_config": {"type": "string"},
+    "profile": {"type": "string"},
+    "go": {
+      "type": "object", "additionalProperties": false,
+      "properties": {
+        "module_root": {"type": "string"},
+        "artifacts": {"type": "array", "items": {"$ref": "#/$defs/artifact"}}
+      }
+    },
+    "bindings": {"type": "array", "items": {"$ref": "#/$defs/binding"}},
+    "scenarios": {"type": "array", "items": {"$ref": "#/$defs/scenario"}},
+    "exclusions": {"type": "array", "items": {"$ref": "#/$defs/exclusion"}},
+    "coverage": {"$ref": "#/$defs/coverage"}
+  },
+  "$defs": {
+    "id": {"type": "string", "pattern": "^[A-Za-z][A-Za-z0-9_.:/-]*$"},
+    "artifact": {
+      "type": "object", "additionalProperties": false, "required": ["name", "package"],
+      "properties": {
+        "name": {"type": "string", "pattern": "^[A-Za-z0-9_-]+$"},
+        "package": {"type": "string"}
+      }
+    },
+    "binding": {
+      "type": "object", "additionalProperties": false, "required": ["spec_id", "package", "kind"],
+      "properties": {
+        "spec_id": {"$ref": "#/$defs/id"}, "package": {"type": "string"},
+        "kind": {"enum": ["package", "func", "method", "type", "field", "const", "var"]},
+        "receiver": {"type": "string"}, "name": {"type": "string"}
+      }
+    },
+    "scenario": {
+      "type": "object", "additionalProperties": false, "required": ["spec_id"],
+      "properties": {
+        "spec_id": {"$ref": "#/$defs/id"},
+        "covers": {"type": "array", "items": {"$ref": "#/$defs/id"}},
+        "command": {"$ref": "#/$defs/command"}, "go_test": {"$ref": "#/$defs/go_test"},
+        "expect": {"$ref": "#/$defs/expect"}, "trace": {"$ref": "#/$defs/trace"}
+      },
+      "oneOf": [{"required": ["command"], "not": {"required": ["go_test"]}}, {"required": ["go_test"], "not": {"required": ["command"]}}],
+      "allOf": [{
+        "if": {"required": ["command"]},
+        "then": {"required": ["expect"], "properties": {"expect": {"required": ["exit_code"]}}}
+      }]
+    },
+    "command": {
+      "type": "object", "additionalProperties": false, "required": ["artifact", "fixture"],
+      "properties": {
+        "artifact": {"type": "string", "minLength": 1}, "args": {"type": "array", "items": {"type": "string"}},
+        "fixture": {"type": "string", "minLength": 1}, "env": {"type": "object", "additionalProperties": {"type": "string"}},
+        "timeout": {"type": "string"}, "repeat": {"type": "integer", "minimum": 1}
+      }
+    },
+    "go_test": {
+      "type": "object", "additionalProperties": false, "required": ["package", "test"],
+      "properties": {"package": {"type": "string", "minLength": 1}, "test": {"type": "string", "minLength": 1}, "timeout": {"type": "string"}}
+    },
+    "stream": {
+      "type": "object", "additionalProperties": false,
+      "properties": {
+        "empty": {"type": "boolean"}, "equals": {"type": "string"},
+        "contains": {"type": "array", "items": {"type": "string"}},
+        "file": {"type": "string"}, "json_file": {"type": "string"}
+      }
+    },
+    "file": {
+      "type": "object", "additionalProperties": false, "required": ["path"],
+      "properties": {"path": {"type": "string"}, "exists": {"type": "boolean"}, "equals_file": {"type": "string"}, "json_file": {"type": "string"}}
+    },
+    "expect": {
+      "type": "object", "additionalProperties": false,
+      "properties": {
+        "exit_code": {"type": "integer"}, "stdout": {"$ref": "#/$defs/stream"},
+        "stderr": {"$ref": "#/$defs/stream"}, "files": {"type": "array", "items": {"$ref": "#/$defs/file"}}
+      }
+    },
+    "trace_match": {
+      "type": "object", "additionalProperties": false, "required": ["spec_id"],
+      "properties": {"spec_id": {"$ref": "#/$defs/id"}, "phase": {"type": "string"}, "outcome": {"type": "string"}}
+    },
+    "trace": {
+      "type": "object", "additionalProperties": false,
+      "properties": {"ordered": {"type": "array", "items": {"$ref": "#/$defs/trace_match"}}}
+    },
+    "exclusion": {
+      "type": "object", "additionalProperties": false, "required": ["spec_ids", "reason"],
+      "properties": {"spec_ids": {"type": "array", "minItems": 1, "items": {"$ref": "#/$defs/id"}}, "reason": {"type": "string", "minLength": 1}}
+    },
+    "coverage": {
+      "type": "object", "additionalProperties": false, "required": ["baseline", "floors", "max_exclusions"],
+      "properties": {
+        "baseline": {"type": "string", "minLength": 1},
+        "floors": {"type": "object", "additionalProperties": false, "required": ["static", "command", "go_test", "trace"], "properties": {
+          "static": {"type": "number", "minimum": 0, "maximum": 100},
+          "command": {"type": "number", "minimum": 0, "maximum": 100},
+          "go_test": {"type": "number", "minimum": 0, "maximum": 100},
+          "trace": {"type": "number", "minimum": 0, "maximum": 100}
+        }},
+        "max_exclusions": {"type": "integer", "minimum": 0}
+      }
+    }
+  }
+}
