@@ -42,11 +42,10 @@ func DOT(state specstate.State, selectGraph string) ([]byte, error) {
 	output.WriteString("digraph gridspec_view {\n")
 	output.WriteString("  graph [label=")
 	output.WriteString(strconv.Quote(state.Module + " (generated view)"))
-	output.WriteString(", labelloc=t];\n  node [shape=box];\n")
+	output.WriteString(", labelloc=t];\n  node [shape=plaintext];\n")
 	if selectGraph == "" {
 		for _, graph := range ir.Graphs {
-			label := fmt.Sprintf("%s\\n%s\\n%d nodes, %d edges", graph.ID, graph.Kind, len(graph.Nodes), len(graph.Edges))
-			fmt.Fprintf(&output, "  %s [label=%s];\n", dotID(graph.ID), strconv.Quote(label))
+			fmt.Fprintf(&output, "  %s [label=%s,shape=%s];\n", dotID(graph.ID), strconv.Quote(graph.ID), shapeForKind(graph.Kind))
 		}
 		for _, graph := range ir.Graphs {
 			for _, dependency := range splitList(graph.Attrs["specdot_depends_on"]) {
@@ -61,11 +60,7 @@ func DOT(state specstate.State, selectGraph string) ([]byte, error) {
 			}
 			found = true
 			for _, node := range graph.Nodes {
-				label := node.ID
-				if node.Kind != "" {
-					label += "\\n" + node.Kind
-				}
-				fmt.Fprintf(&output, "  %s [label=%s];\n", dotID(node.ID), strconv.Quote(label))
+				fmt.Fprintf(&output, "  %s [label=%s,shape=%s];\n", dotID(node.ID), strconv.Quote(node.ID), shapeForKind(node.Kind))
 			}
 			for _, edge := range graph.Edges {
 				fmt.Fprintf(&output, "  %s -> %s [label=%s];\n", dotID(edge.From), dotID(edge.To), strconv.Quote(edge.ID))
@@ -80,6 +75,32 @@ func DOT(state specstate.State, selectGraph string) ([]byte, error) {
 }
 
 func dotID(value string) string { return strconv.Quote("id:" + value) }
+
+var shapesByKind = map[string]string{
+	"agent":     "hexagon",
+	"algorithm": "box3d",
+	"data":      "folder",
+	"decision":  "diamond",
+	"effect":    "parallelogram",
+	"final":     "doublecircle",
+	"machine":   "component",
+	"outcome":   "octagon",
+	"process":   "box",
+	"promise":   "house",
+	"resource":  "cylinder",
+	"scenario":  "note",
+	"start":     "circle",
+	"state":     "ellipse",
+	"step":      "trapezium",
+	"type":      "tab",
+}
+
+func shapeForKind(kind string) string {
+	if shape := shapesByKind[kind]; shape != "" {
+		return shape
+	}
+	return "plaintext"
+}
 
 func splitList(value string) []string {
 	var result []string

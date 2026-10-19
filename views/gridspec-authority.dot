@@ -1,15 +1,15 @@
 digraph gridspec_view {
   graph [label="github.com/promisegrid/gridspec (generated view)", labelloc=t];
-  node [shape=box];
-  "id:gridspec.acceptance.decision" [label="gridspec.acceptance.decision\\ndecision"];
-  "id:gridspec.derived.outputs" [label="gridspec.derived.outputs\\nfinal"];
-  "id:gridspec.materialized.state" [label="gridspec.materialized.state\\nprocess"];
-  "id:gridspec.proposal" [label="gridspec.proposal\\nprocess"];
-  "id:gridspec.rejected" [label="gridspec.rejected\\nfinal"];
-  "id:gridspec.replay" [label="gridspec.replay\\nprocess"];
-  "id:gridspec.signed.commit" [label="gridspec.signed.commit\\nprocess"];
-  "id:gridspec.transaction" [label="gridspec.transaction\\nstart"];
-  "id:gridspec.vet" [label="gridspec.vet\\nprocess"];
+  node [shape=plaintext];
+  "id:gridspec.acceptance.decision" [label="gridspec.acceptance.decision",shape=diamond];
+  "id:gridspec.derived.outputs" [label="gridspec.derived.outputs",shape=doublecircle];
+  "id:gridspec.materialized.state" [label="gridspec.materialized.state",shape=box];
+  "id:gridspec.proposal" [label="gridspec.proposal",shape=box];
+  "id:gridspec.rejected" [label="gridspec.rejected",shape=doublecircle];
+  "id:gridspec.replay" [label="gridspec.replay",shape=box];
+  "id:gridspec.signed.commit" [label="gridspec.signed.commit",shape=box];
+  "id:gridspec.transaction" [label="gridspec.transaction",shape=circle];
+  "id:gridspec.vet" [label="gridspec.vet",shape=box];
   "id:gridspec.signed.commit" -> "id:gridspec.derived.outputs" [label="gridspec.flow.accepted.outputs"];
   "id:gridspec.acceptance.decision" -> "id:gridspec.signed.commit" [label="gridspec.flow.decision.accept"];
   "id:gridspec.acceptance.decision" -> "id:gridspec.rejected" [label="gridspec.flow.decision.reject"];
