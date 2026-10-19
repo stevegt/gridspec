@@ -6,9 +6,28 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"sort"
+	"strings"
+	"unicode/utf8"
 )
 
 const IRSchema = "gridspec.ir/v1"
+
+const (
+	TitleMaxRunes   = 40
+	SummaryMaxRunes = 140
+)
+
+func ValidTitle(value string) bool {
+	return validDescription(value, TitleMaxRunes)
+}
+
+func ValidSummary(value string) bool {
+	return value == "" || validDescription(value, SummaryMaxRunes)
+}
+
+func validDescription(value string, maximum int) bool {
+	return value != "" && value == strings.TrimSpace(value) && !strings.ContainsAny(value, "\r\n") && utf8.RuneCountInString(value) <= maximum
+}
 
 type Source struct {
 	Path   string `json:"path"`
@@ -39,6 +58,8 @@ type IR struct {
 type Graph struct {
 	ID       string            `json:"id"`
 	DotID    string            `json:"dot_id,omitempty"`
+	Title    string            `json:"title,omitempty"`
+	Summary  string            `json:"summary,omitempty"`
 	Kind     string            `json:"kind"`
 	Status   string            `json:"status"`
 	Directed bool              `json:"directed"`
@@ -55,6 +76,8 @@ type Graph struct {
 type Element struct {
 	ID       string            `json:"id"`
 	DotID    string            `json:"dot_id,omitempty"`
+	Title    string            `json:"title,omitempty"`
+	Summary  string            `json:"summary,omitempty"`
 	GraphID  string            `json:"graph_id"`
 	Element  string            `json:"element"` // node or edge
 	Kind     string            `json:"kind"`

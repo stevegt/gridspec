@@ -13,6 +13,7 @@ import (
 	"github.com/promisegrid/gridspec/internal/artifact"
 	"github.com/promisegrid/gridspec/internal/conformanceevidence"
 	"github.com/promisegrid/gridspec/internal/gitstore"
+	"github.com/promisegrid/gridspec/internal/gridwire"
 )
 
 func TestInitProposeAcceptAndReload(t *testing.T) {
@@ -113,6 +114,40 @@ func TestInitProposeAcceptAndReload(t *testing.T) {
 	probe.Dir = dir
 	if err := probe.Run(); err == nil {
 		t.Fatal("private signing key was written to the Git object database")
+	}
+}
+
+func TestProposeFromPinsSourceAndCarriesRequiredAudit(t *testing.T) {
+	ctx := context.Background()
+	dir := t.TempDir()
+	command := exec.Command("git", "init", "-q")
+	command.Dir = dir
+	if output, err := command.CombinedOutput(); err != nil {
+		t.Fatalf("git init: %s: %v", output, err)
+	}
+	current, _, err := Init(ctx, InitOptions{Dir: dir, Name: "example.test/pinned", Profile: "default"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	source, err := current.LoadSource(ctx, "")
+	if err != nil {
+		t.Fatal(err)
+	}
+	audit := []byte(`{"schema":"test-audit/v1"}`)
+	auditCID, err := gridwire.RawCID(audit)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := current.Repository.Put(ctx, auditCID, audit); err != nil {
+		t.Fatal(err)
+	}
+	program := []byte("gridspec 1\nput graph graph.test { title = \"Pinned proposal\", kind = \"decision\", status = \"active\", directed = true, attrs = {} }\n")
+	proposal, err := current.ProposeFrom(ctx, source, program, []cid.Cid{auditCID})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !proposal.Event.Base.Equals(source.State.CID) || !proposal.Event.Previous.Equals(source.Event.CID) || !hasCID(proposal.Event.Required, auditCID) {
+		t.Fatalf("proposal did not retain pinned source and audit: %#v", proposal.Event)
 	}
 }
 

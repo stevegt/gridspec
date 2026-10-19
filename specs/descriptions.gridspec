@@ -1,0 +1,205 @@
+gridspec 1
+assert exists graph graph.gridspec.authority
+put graph graph.gridspec.describe {
+  title = "Description proposal workflow",
+  summary = "Generate concise labels without granting the model authority to change accepted specification state.",
+  kind = "algorithm",
+  status = "active",
+  directed = true,
+  strict = true,
+  URL = "../docs/architecture.md",
+  attrs = {},
+  location = { file = "views/gridspec-describe.dot", line = 1, column = 1 }
+}
+put node gridspec.describe.accepted {
+  title = "Load accepted state",
+  summary = "Load and verify the accepted CAS state that supplies both context and the proposal base.",
+  graph_id = "graph.gridspec.describe",
+  kind = "start",
+  status = "active",
+  attrs = { specdot_initial = "true" },
+  location = { file = "views/gridspec-describe.dot", line = 3, column = 1 }
+}
+put node gridspec.describe.select {
+  title = "Select missing descriptions",
+  summary = "Select active graph, node, and edge entities that lack a title or summary.",
+  graph_id = "graph.gridspec.describe",
+  kind = "process",
+  status = "active",
+  attrs = {},
+  location = { file = "views/gridspec-describe.dot", line = 4, column = 1 }
+}
+put node gridspec.describe.complete {
+  title = "Descriptions complete?",
+  summary = "Choose between a no-op and one bounded model request from the deterministic target set.",
+  graph_id = "graph.gridspec.describe",
+  kind = "decision",
+  status = "active",
+  attrs = {},
+  location = { file = "views/gridspec-describe.dot", line = 5, column = 1 }
+}
+put node gridspec.describe.request {
+  title = "Request model descriptions",
+  summary = "Send the complete canonical text state and exact target list in one model request.",
+  graph_id = "graph.gridspec.describe",
+  kind = "process",
+  status = "active",
+  attrs = {},
+  location = { file = "views/gridspec-describe.dot", line = 6, column = 1 }
+}
+put node gridspec.describe.validate {
+  title = "Validate model response",
+  summary = "Require strict JSON, exact target coverage, and descriptions within the accepted length limits.",
+  graph_id = "graph.gridspec.describe",
+  kind = "decision",
+  status = "active",
+  attrs = {},
+  location = { file = "views/gridspec-describe.dot", line = 7, column = 1 }
+}
+put node gridspec.describe.audit {
+  title = "Build model audit",
+  summary = "Encode the exact request, response, provider metadata, and selected source identity for CAS storage.",
+  graph_id = "graph.gridspec.describe",
+  kind = "process",
+  status = "active",
+  attrs = {},
+  location = { file = "views/gridspec-describe.dot", line = 8, column = 1 }
+}
+put node gridspec.describe.transaction {
+  title = "Build preserving transaction",
+  summary = "Construct assertions and full field-preserving puts without accepting model-authored transaction text.",
+  graph_id = "graph.gridspec.describe",
+  kind = "process",
+  status = "active",
+  attrs = {},
+  location = { file = "views/gridspec-describe.dot", line = 9, column = 1 }
+}
+put node gridspec.describe.proposal {
+  title = "Publish unsigned proposal",
+  summary = "Materialize a proposal pinned to the loaded base state and linked to the CAS audit object.",
+  graph_id = "graph.gridspec.describe",
+  kind = "final",
+  status = "active",
+  attrs = { specdot_final = "true" },
+  location = { file = "views/gridspec-describe.dot", line = 10, column = 1 }
+}
+put node gridspec.describe.noop {
+  title = "Return without a proposal",
+  summary = "Exit successfully without a provider call when every selected entity is already described.",
+  graph_id = "graph.gridspec.describe",
+  kind = "final",
+  status = "active",
+  attrs = { specdot_final = "true" },
+  location = { file = "views/gridspec-describe.dot", line = 11, column = 1 }
+}
+put node gridspec.describe.failure {
+  title = "Reject invalid generation",
+  summary = "Leave accepted state unchanged after provider, validation, audit, replay, or proposal failure.",
+  graph_id = "graph.gridspec.describe",
+  kind = "final",
+  status = "active",
+  attrs = { specdot_final = "true" },
+  location = { file = "views/gridspec-describe.dot", line = 12, column = 1 }
+}
+put edge gridspec.describe.flow.accepted.select {
+  title = "Read canonical entities",
+  summary = "Pass the verified accepted state to deterministic target selection.",
+  graph_id = "graph.gridspec.describe", kind = "flow", status = "active",
+  from = "gridspec.describe.accepted", to = "gridspec.describe.select", attrs = {},
+  location = { file = "views/gridspec-describe.dot", line = 14, column = 1 }
+}
+put edge gridspec.describe.flow.select.complete {
+  title = "Check selected targets",
+  summary = "Classify the selected target set as empty or requiring generation.",
+  graph_id = "graph.gridspec.describe", kind = "flow", status = "active",
+  from = "gridspec.describe.select", to = "gridspec.describe.complete", attrs = {},
+  location = { file = "views/gridspec-describe.dot", line = 15, column = 1 }
+}
+put edge gridspec.describe.flow.complete.noop {
+  title = "No descriptions missing",
+  summary = "Take the no-op path without configuring or calling a model provider.",
+  graph_id = "graph.gridspec.describe", kind = "flow", status = "active",
+  from = "gridspec.describe.complete", to = "gridspec.describe.noop",
+  attrs = { specdot_branch = "complete" },
+  location = { file = "views/gridspec-describe.dot", line = 16, column = 1 }
+}
+put edge gridspec.describe.flow.complete.request {
+  title = "Descriptions are missing",
+  summary = "Take the generation path when at least one selected entity lacks a title or summary.",
+  graph_id = "graph.gridspec.describe", kind = "flow", status = "active",
+  from = "gridspec.describe.complete", to = "gridspec.describe.request",
+  attrs = { specdot_branch = "missing" },
+  location = { file = "views/gridspec-describe.dot", line = 17, column = 1 }
+}
+put edge gridspec.describe.flow.request.validate {
+  title = "Receive model response",
+  summary = "Pass the single model response to strict structural and semantic validation.",
+  graph_id = "graph.gridspec.describe", kind = "flow", status = "active",
+  from = "gridspec.describe.request", to = "gridspec.describe.validate", attrs = {},
+  location = { file = "views/gridspec-describe.dot", line = 18, column = 1 }
+}
+put edge gridspec.describe.flow.request.failure {
+  title = "Provider request fails",
+  summary = "Terminate without a proposal when provider configuration or execution fails.",
+  graph_id = "graph.gridspec.describe", kind = "flow", status = "active",
+  from = "gridspec.describe.request", to = "gridspec.describe.failure", attrs = {},
+  location = { file = "views/gridspec-describe.dot", line = 19, column = 1 }
+}
+put edge gridspec.describe.flow.validate.audit {
+  title = "Response is valid",
+  summary = "Continue only after every requested entity has one valid description and no extra fields.",
+  graph_id = "graph.gridspec.describe", kind = "flow", status = "active",
+  from = "gridspec.describe.validate", to = "gridspec.describe.audit",
+  attrs = { specdot_branch = "valid" },
+  location = { file = "views/gridspec-describe.dot", line = 20, column = 1 }
+}
+put edge gridspec.describe.flow.validate.failure {
+  title = "Response is invalid",
+  summary = "Reject incomplete, duplicate, malformed, unexpected, or overlong model output.",
+  graph_id = "graph.gridspec.describe", kind = "flow", status = "active",
+  from = "gridspec.describe.validate", to = "gridspec.describe.failure",
+  attrs = { specdot_branch = "invalid" },
+  location = { file = "views/gridspec-describe.dot", line = 21, column = 1 }
+}
+put edge gridspec.describe.flow.audit.transaction {
+  title = "Link audit evidence",
+  summary = "Carry the complete model exchange as a required CAS link on the proposal.",
+  graph_id = "graph.gridspec.describe", kind = "flow", status = "active",
+  from = "gridspec.describe.audit", to = "gridspec.describe.transaction", attrs = {},
+  location = { file = "views/gridspec-describe.dot", line = 22, column = 1 }
+}
+put edge gridspec.describe.flow.audit.failure {
+  title = "Audit encoding fails",
+  summary = "Terminate without a proposal when deterministic audit encoding or CAS storage fails.",
+  graph_id = "graph.gridspec.describe", kind = "flow", status = "active",
+  from = "gridspec.describe.audit", to = "gridspec.describe.failure", attrs = {},
+  location = { file = "views/gridspec-describe.dot", line = 23, column = 1 }
+}
+put edge gridspec.describe.flow.transaction.proposal {
+  title = "Materialize proposal",
+  summary = "Replay the preserving transaction from the pinned base and publish its unsigned proposal event.",
+  graph_id = "graph.gridspec.describe", kind = "flow", status = "active",
+  from = "gridspec.describe.transaction", to = "gridspec.describe.proposal", attrs = {},
+  location = { file = "views/gridspec-describe.dot", line = 24, column = 1 }
+}
+put edge gridspec.describe.flow.transaction.failure {
+  title = "Proposal construction fails",
+  summary = "Terminate without changing accepted state when replay, validation, or publication fails.",
+  graph_id = "graph.gridspec.describe", kind = "flow", status = "active",
+  from = "gridspec.describe.transaction", to = "gridspec.describe.failure", attrs = {},
+  location = { file = "views/gridspec-describe.dot", line = 25, column = 1 }
+}
+put contract graph.gridspec.describe {
+  schema = "gridspec.contract/v1",
+  kind = "algorithm",
+  status = "active",
+  summary = "Create reviewable description proposals while deterministic code retains transaction and acceptance authority.",
+  metadata = {
+    model_output = "strict JSON descriptions only",
+    transaction_authority = "deterministic field-preserving tool code",
+    proposal_base = "the exact loaded accepted state",
+    audit = "exact request and response stored as a required CAS link",
+    acceptance = "separate signed operator action"
+  },
+  location = { file = "docs/architecture.md", line = 142, column = 1 }
+}

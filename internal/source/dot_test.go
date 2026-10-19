@@ -82,3 +82,23 @@ func TestChainedEdgeNeedsSegmentIDs(t *testing.T) {
 		t.Fatalf("expected chained-edge diagnostic, got %#v", diagnostics)
 	}
 }
+
+func TestLegacyDOTDerivesBoundedDescriptions(t *testing.T) {
+	data := []byte(`digraph long_graph_name {
+  graph [specdot_version="1", specdot_kind="algorithm", specdot_id="graph.legacy", label=" Legacy graph ", tooltip=" A legacy summary "];
+  first_step [specdot_id="node.first", specdot_kind="start", label="First\nstep"];
+  final_step [specdot_id="node.final", specdot_kind="final"];
+  first_step -> final_step [specdot_id="flow.legacy.finished", specdot_kind="flow", specdot_branch="finished"];
+}`)
+	graphs, diagnostics := parseDOT(File{Rel: "test.dot", Kind: "dot", Data: data})
+	if len(diagnostics) != 0 || len(graphs) != 1 {
+		t.Fatalf("graphs=%#v diagnostics=%#v", graphs, diagnostics)
+	}
+	graph := graphs[0]
+	if graph.Title != "Legacy graph" || graph.Summary != "A legacy summary" {
+		t.Fatalf("graph description = %q / %q", graph.Title, graph.Summary)
+	}
+	if graph.Nodes[0].Title != "First step" || graph.Edges[0].Title != "finished" {
+		t.Fatalf("derived titles = node %q edge %q", graph.Nodes[0].Title, graph.Edges[0].Title)
+	}
+}

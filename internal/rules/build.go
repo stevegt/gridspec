@@ -18,6 +18,14 @@ func checkBuildReadiness(ctx Context, idx Index) []diag.Diagnostic {
 		if graph.Status != "active" {
 			continue
 		}
+		if graph.Title == "" {
+			ds = append(ds, diagnostic("SDV602", diag.SeverityError, graph.Location, "active graph has no human-readable title", "set a concise title field", graph.ID, true))
+		}
+		for _, element := range append(append([]model.Element(nil), graph.Nodes...), graph.Edges...) {
+			if element.Status == "active" && element.Title == "" {
+				ds = append(ds, diagnostic("SDV602", diag.SeverityError, element.Location, "active "+element.Element+" has no human-readable title", "set a concise title field", element.ID, true))
+			}
+		}
 		if graph.Kind == "scenario" {
 			hasScenario = true
 		}

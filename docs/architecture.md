@@ -154,11 +154,19 @@ them “advisory” understates their role. The correct boundary is capability a
 authority:
 
 - they may create complete candidate transactions and complete candidate code;
+- they may propose bounded graph, node, and edge descriptions, while the tool
+  constructs field-preserving transactions and stores request/response audit
+  data in CAS;
 - their raw output is untrusted input to deterministic parsers and checkers;
 - provider/model/response identity is recorded as provenance where useful;
 - a model failure cannot mutate accepted state;
 - a model never receives signing material or calls the acceptance operation;
 - acceptance is a separate signed transaction-selection act.
+
+Human-readable titles and summaries are part of accepted state. DOT renderers
+never ask a model to invent labels: they use IDs by default and may format any
+stored entity field explicitly. This keeps identical state CIDs reproducible
+across machines and makes descriptive changes reviewable like code changes.
 
 See the frozen wire descriptions in [`protocols/`](../protocols/) and the
 transaction grammar in

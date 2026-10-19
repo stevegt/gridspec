@@ -30,6 +30,8 @@ func run(args []string, stdout, stderr io.Writer) int {
 		return runImport(args[1:], stdout, stderr)
 	case "disassemble":
 		return runDisassemble(args[1:], stdout, stderr)
+	case "describe":
+		return runDescribe(args[1:], stdout, stderr)
 	case "build":
 		return runBuild(args[1:], stdout, stderr)
 	case "conform":
@@ -63,6 +65,7 @@ func usage(writer io.Writer) {
 	fmt.Fprintln(writer, "  view         render accepted or proposed specs as text or DOT")
 	fmt.Fprintln(writer, "  import       migrate legacy DOT and Markdown")
 	fmt.Fprintln(writer, "  disassemble  propose specs from existing Go")
+	fmt.Fprintln(writer, "  describe     propose human-readable spec descriptions")
 	fmt.Fprintln(writer, "  build        compile accepted or proposed specs into new Go")
 	fmt.Fprintln(writer, "  conform      test existing Go against accepted or proposed specs")
 	fmt.Fprintln(writer, "  update       update owned Go or preview a proposal")

@@ -26,6 +26,22 @@ func TestVetRejectsUnsupportedFormatBeforeRepositoryAccess(t *testing.T) {
 	}
 }
 
+func TestViewRejectsInvalidLabelFormatBeforeRepositoryAccess(t *testing.T) {
+	for _, args := range [][]string{
+		{"view", "--format", "dot", "--label-format", "{title"},
+		{"view", "--format", "text", "--label-format", "{title}"},
+		{"view", "--format", "invalid", "--label-format", "{title}"},
+	} {
+		var stdout, stderr bytes.Buffer
+		if code := run(args, &stdout, &stderr); code != 2 {
+			t.Fatalf("%v code=%d stderr=%s", args, code, stderr.String())
+		}
+		if !strings.Contains(stderr.String(), "label-format") && !strings.Contains(stderr.String(), "label format") {
+			t.Fatalf("%v stderr = %q", args, stderr.String())
+		}
+	}
+}
+
 func TestProposalUpdateCannotWrite(t *testing.T) {
 	var stdout, stderr bytes.Buffer
 	if code := run([]string{"update", "--proposal", "proposal", "--write"}, &stdout, &stderr); code != 2 {

@@ -35,9 +35,10 @@ process execution, so execution terminates in steps bounded by program size.
 
 Version 1 recognizes these checker-facing entity kinds:
 
-- `graph`, with graph kind/status, URL, attributes, and source location;
-- `node` and `edge`, with a `graph_id`, semantic kind/status, attributes, and
-  edge endpoints;
+- `graph`, with a human-readable title, optional summary, kind/status, URL,
+  attributes, and source location;
+- `node` and `edge`, with a human-readable title, optional summary, a
+  `graph_id`, semantic kind/status, attributes, and edge endpoints;
 - `contract`, carrying typed agent, promise, machine, data, channel, effect,
   claim, waiver, latitude, and metadata fields;
 - `document`, carrying exact UTF-8 Markdown content, its lowercase SHA-256,
@@ -48,6 +49,12 @@ The state layer is extensible: unknown entity kinds are preserved by replay and
 views even when the current semantic checker has no rules for them. Protocol
 documents under [`protocols/`](../protocols/) freeze the exact Grid-CBOR slots,
 pCIDs, CID profiles, and signing projection.
+
+In build-ready profiles, every active graph, node, and edge has a title. Titles
+are trimmed, single-line text of at most 40 characters. Summaries, when
+present, are trimmed, single-line text of at most 140 characters. These fields
+are compiler input: an LLM may propose them, but they change authority only
+through the normal immutable transaction and signed-acceptance path.
 
 ## Events and acceptance
 

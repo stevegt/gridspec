@@ -301,7 +301,30 @@ func (project *Project) Propose(ctx context.Context, program []byte, authored bo
 	if err != nil {
 		return Proposal{}, err
 	}
+	return project.proposeSnapshot(ctx, accepted, program, authored, nil)
+}
+
+// ProposeFrom publishes an unsigned tool proposal against the exact accepted
+// source read before a potentially long-running transformation. If acceptance
+// advances meanwhile, the existing acceptance check rejects the stale result.
+func (project *Project) ProposeFrom(ctx context.Context, source Source, program []byte, required []cid.Cid) (Proposal, error) {
+	if err := source.Identity.Validate(); err != nil {
+		return Proposal{}, err
+	}
+	if source.Identity.Kind != specsource.Accepted {
+		return Proposal{}, fmt.Errorf("tool proposal base must be accepted specifications")
+	}
+	if !source.Identity.AcceptedCommit.Equals(source.Commit.CID) || !source.Identity.Event.Equals(source.Event.CID) || !source.Identity.State.Equals(source.State.CID) {
+		return Proposal{}, fmt.Errorf("tool proposal source identity does not match its loaded objects")
+	}
+	return project.proposeSnapshot(ctx, Snapshot{
+		Commit: source.Commit, Carrier: source.Carrier, Head: source.Event, State: source.State,
+	}, program, false, required)
+}
+
+func (project *Project) proposeSnapshot(ctx context.Context, accepted Snapshot, program []byte, authored bool, required []cid.Cid) (Proposal, error) {
 	options := transaction.BuildOptions{Previous: accepted.Head.CID, Base: accepted.State, Program: program}
+	options.Required = append([]cid.Cid(nil), required...)
 	if authored {
 		options.AgentID, options.Signer = project.AgentID, project.Signer
 	}

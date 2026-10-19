@@ -161,6 +161,7 @@ func checkGeneric(ctx Context, idx Index) []diag.Diagnostic {
 	var ds []diag.Diagnostic
 	validStatus := map[string]bool{"active": true, "draft": true, "historical": true, "superseded": true}
 	for _, graph := range ctx.IR.Graphs {
+		ds = append(ds, descriptionDiagnostics(graph.Title, graph.Summary, graph.Location, graph.ID)...)
 		for key := range graph.Attrs {
 			if strings.HasPrefix(key, "specdot_") && !knownSpecdotAttr[key] {
 				ds = append(ds, diagnostic("SDV120", diag.SeverityError, graph.Location, fmt.Sprintf("unknown semantic attribute %q", key), "correct the spelling or extend the versioned language schema", graph.ID, false))
@@ -179,6 +180,7 @@ func checkGeneric(ctx Context, idx Index) []diag.Diagnostic {
 			}
 		}
 		for _, element := range append(append([]model.Element(nil), graph.Nodes...), graph.Edges...) {
+			ds = append(ds, descriptionDiagnostics(element.Title, element.Summary, element.Location, element.ID)...)
 			if !validStatus[element.Status] {
 				ds = append(ds, diagnostic("SDV110", diag.SeverityError, element.Location, fmt.Sprintf("invalid status %q", element.Status), "use active, draft, historical, or superseded", element.ID, true))
 			}
@@ -230,6 +232,17 @@ func checkGeneric(ctx Context, idx Index) []diag.Diagnostic {
 				ds = append(ds, diagnostic("SDV119", diag.SeverityWarning, element.Location, "diamond shape implies a decision visually, but specdot_kind is not decision", "encode semantics explicitly; rendering attributes are never authoritative", element.ID, true))
 			}
 		}
+	}
+	return ds
+}
+
+func descriptionDiagnostics(title, summary string, location model.Location, id string) []diag.Diagnostic {
+	var ds []diag.Diagnostic
+	if title != "" && !model.ValidTitle(title) {
+		ds = append(ds, diagnostic("SDV121", diag.SeverityError, location, fmt.Sprintf("title must be trimmed, single-line, and at most %d characters", model.TitleMaxRunes), "replace it with a concise human-readable title", id, true))
+	}
+	if !model.ValidSummary(summary) {
+		ds = append(ds, diagnostic("SDV122", diag.SeverityError, location, fmt.Sprintf("summary must be trimmed, single-line, and at most %d characters", model.SummaryMaxRunes), "replace it with one concise line", id, true))
 	}
 	return ds
 }

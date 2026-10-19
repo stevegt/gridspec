@@ -170,7 +170,7 @@ func Disassemble(ctx context.Context, model provider.Provider, store cas.Store, 
 	}{string(current), bundle})
 	response, err := model.Generate(ctx, provider.Request{
 		Operation:    "go_to_gridspec",
-		Instructions: "Disassemble the supplied Go implementation into a GridSpec transaction that updates the accepted specification. Return only a valid GridSpec transaction-language v1 program, beginning with 'gridspec 1'. Preserve uncertainty as explicit contract metadata; do not claim whole-program equivalence.",
+		Instructions: "Disassemble the supplied Go implementation into a GridSpec transaction that updates the accepted specification. Return only a valid GridSpec transaction-language v1 program, beginning with 'gridspec 1'. Every new graph, node, and edge must have a trimmed single-line title of at most 40 characters; add a trimmed single-line summary of at most 140 characters where the implementation supports one. Preserve uncertainty as explicit contract metadata; do not claim whole-program equivalence.",
 		Input:        string(input), MaxOutputTokens: 32_768,
 	})
 	if err != nil {

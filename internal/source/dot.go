@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"fmt"
 	"strings"
+	"unicode/utf8"
 
 	"github.com/promisegrid/gridspec/internal/diag"
 	"github.com/promisegrid/gridspec/internal/model"
@@ -81,8 +82,11 @@ func compileGraph(g *dotast.Graph, path string, ordinal int, idx lineIndex) (mod
 	status := defaultString(attrs["specdot_status"], "active")
 	loc := idx.find(attrs["specdot_id"], attrs["id"], dotID)
 	b := &dotGraphBuilder{
-		graph: model.Graph{ID: id, DotID: dotID, Kind: kind, Status: status, Directed: g.Directed, Strict: g.Strict, URL: attrs["URL"], Attrs: attrs, Location: loc},
-		idx:   idx, dotToID: make(map[string]string), declaredDot: make(map[string]model.Location),
+		graph: model.Graph{
+			ID: id, DotID: dotID, Title: legacyTitle(attrs["label"], dotID, id), Summary: legacyText(attrs["tooltip"], model.SummaryMaxRunes),
+			Kind: kind, Status: status, Directed: g.Directed, Strict: g.Strict, URL: attrs["URL"], Attrs: attrs, Location: loc,
+		},
+		idx: idx, dotToID: make(map[string]string), declaredDot: make(map[string]model.Location),
 	}
 	if semanticID(attrs) == "" {
 		b.add("SDV010", diag.SeverityError, loc, "graph is missing a semantic id attribute", "add graph [specdot_id=\"graph.<name>\"]", "", false)
@@ -171,7 +175,8 @@ func (b *dotGraphBuilder) node(n *dotast.NodeStmt, defaults map[string]string) {
 		kind = inferredElementKind(b.graph.Kind, "node")
 	}
 	e := model.Element{
-		ID: id, DotID: dotID, GraphID: b.graph.ID, Element: "node", Kind: kind,
+		ID: id, DotID: dotID, Title: legacyTitle(attrs["label"], dotID, id), Summary: legacyText(attrs["tooltip"], model.SummaryMaxRunes),
+		GraphID: b.graph.ID, Element: "node", Kind: kind,
 		Status: defaultString(attrs["specdot_status"], b.graph.Status), URL: attrs["URL"], Attrs: attrs, Location: loc,
 	}
 	b.dotToID[dotID] = id
@@ -210,7 +215,8 @@ func (b *dotGraphBuilder) edge(e *dotast.EdgeStmt, defaults map[string]string) {
 		}
 		b.pending = append(b.pending, pendingEdge{
 			element: model.Element{
-				ID: segmentID, GraphID: b.graph.ID, Element: "edge", Kind: kind,
+				ID: segmentID, Title: legacyEdgeTitle(attrs, segmentID), Summary: legacyText(attrs["tooltip"], model.SummaryMaxRunes),
+				GraphID: b.graph.ID, Element: "edge", Kind: kind,
 				Status: defaultString(attrs["specdot_status"], b.graph.Status), URL: attrs["URL"], Attrs: cloneMap(attrs), Location: loc,
 			},
 			fromDot: from, toDot: to,
@@ -255,6 +261,67 @@ func semanticID(attrs map[string]string) string {
 func defaultString(value, fallback string) string {
 	if value == "" {
 		return fallback
+	}
+	return value
+}
+
+func legacyTitle(label string, fallbacks ...string) string {
+	if title := legacyText(label, model.TitleMaxRunes); title != "" {
+		return title
+	}
+	for _, fallback := range fallbacks {
+		if title := legacyText(humanize(fallback), model.TitleMaxRunes); title != "" {
+			return title
+		}
+	}
+	return "Untitled"
+}
+
+func legacyEdgeTitle(attrs map[string]string, id string) string {
+	if title := legacyText(attrs["label"], model.TitleMaxRunes); title != "" {
+		return title
+	}
+	for _, key := range []string{"specdot_branch", "specdot_event", "specdot_receive"} {
+		if title := legacyText(humanize(attrs[key]), model.TitleMaxRunes); title != "" {
+			return title
+		}
+	}
+	if after := legacyText(attrs["specdot_after"], model.TitleMaxRunes-len("after ")); after != "" {
+		return "after " + after
+	}
+	if relation := legacyText(humanize(attrs["specdot_relation"]), model.TitleMaxRunes); relation != "" {
+		if cardinality := legacyText(attrs["specdot_cardinality"], 16); cardinality != "" {
+			return legacyText(relation+" ("+cardinality+")", model.TitleMaxRunes)
+		}
+		return relation
+	}
+	if polarity := legacyText(humanize(attrs["specdot_polarity"]), model.TitleMaxRunes); polarity != "" {
+		return legacyText(strings.TrimSpace(polarity+" "+attrs["specdot_type"]), model.TitleMaxRunes)
+	}
+	return legacyTitle("", id)
+}
+
+func humanize(value string) string {
+	return strings.Map(func(r rune) rune {
+		switch r {
+		case '_', '.', '-', ':', '/':
+			return ' '
+		default:
+			return r
+		}
+	}, value)
+}
+
+func legacyText(value string, limit int) string {
+	value = strings.NewReplacer(`\n`, " ", `\l`, " ", `\r`, " ").Replace(value)
+	value = strings.Join(strings.Fields(value), " ")
+	if value == "" || utf8.RuneCountInString(value) <= limit {
+		return value
+	}
+	runes := []rune(value)
+	value = strings.TrimSpace(string(runes[:limit]))
+	if cut := strings.LastIndexByte(value, ' '); cut >= limit/2 {
+		value = strings.TrimSpace(value[:cut])
 	}
 	return value
 }

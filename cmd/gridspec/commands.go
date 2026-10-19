@@ -11,10 +11,14 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/ipfs/go-cid"
+
 	"github.com/promisegrid/gridspec/internal/app"
 	"github.com/promisegrid/gridspec/internal/conform"
+	"github.com/promisegrid/gridspec/internal/describe"
 	"github.com/promisegrid/gridspec/internal/diag"
 	"github.com/promisegrid/gridspec/internal/goworkflow"
+	"github.com/promisegrid/gridspec/internal/gridwire"
 	"github.com/promisegrid/gridspec/internal/migrate"
 	"github.com/promisegrid/gridspec/internal/project"
 	"github.com/promisegrid/gridspec/internal/provider"
@@ -124,10 +128,23 @@ func runView(args []string, stdout, stderr io.Writer) int {
 	flags.SetOutput(stderr)
 	formatName := flags.String("format", "text", "text or dot")
 	graph := flags.String("graph", "", "for DOT, render one graph instead of the compact overview")
+	labelFormat := flags.String("label-format", "", "for DOT, label template such as {title} [{id}]")
 	output := flags.String("output", "-", "output file or -")
 	proposal := flags.String("proposal", "", "use a current proposal event CID or ref")
 	if err := flags.Parse(args); err != nil || len(flags.Args()) != 0 {
 		return 2
+	}
+	labelFormatSet := false
+	flags.Visit(func(current *flag.Flag) { labelFormatSet = labelFormatSet || current.Name == "label-format" })
+	if *formatName != "dot" && labelFormatSet {
+		fmt.Fprintln(stderr, "gridspec view: --label-format requires --format dot")
+		return 2
+	}
+	if *formatName == "dot" {
+		if err := view.ValidateLabelFormat(*labelFormat); err != nil {
+			fmt.Fprintln(stderr, "gridspec view:", err)
+			return 2
+		}
 	}
 	_, source, ok := loadProjectSource(stderr, "view", *proposal)
 	if !ok {
@@ -139,7 +156,7 @@ func runView(args []string, stdout, stderr io.Writer) int {
 	case "text":
 		data, err = view.Text(source.State)
 	case "dot":
-		data, err = view.DOT(source.State, *graph)
+		data, err = view.DOTWithOptions(source.State, view.DOTOptions{Graph: *graph, LabelFormat: *labelFormat})
 	default:
 		err = fmt.Errorf("invalid format %q", *formatName)
 	}
@@ -230,6 +247,59 @@ func runDisassemble(args []string, stdout, stderr io.Writer) int {
 		return 1
 	}
 	fmt.Fprintf(stdout, "proposal %s\nprovider %s\nresponse %s\n", proposal.Event.CID, response.Model, response.ID)
+	return 0
+}
+
+func runDescribe(args []string, stdout, stderr io.Writer) int {
+	flags := flag.NewFlagSet("gridspec describe", flag.ContinueOnError)
+	flags.SetOutput(stderr)
+	graph := flags.String("graph", "", "describe one graph and its nodes and edges")
+	if err := flags.Parse(args); err != nil || len(flags.Args()) != 0 {
+		return 2
+	}
+	current, selected, ok := loadProjectSource(stderr, "describe", "")
+	if !ok {
+		return 2
+	}
+	pending, err := describe.Pending(selected.State, *graph)
+	if err != nil {
+		fmt.Fprintln(stderr, "gridspec describe:", err)
+		return 2
+	}
+	if pending == 0 {
+		fmt.Fprintln(stdout, "descriptions already complete")
+		return 0
+	}
+	generator, err := provider.FromEnvironment()
+	if err != nil {
+		fmt.Fprintln(stderr, "gridspec describe:", err)
+		return 2
+	}
+	result, err := describe.Generate(context.Background(), generator, selected.State, *graph)
+	if err != nil {
+		fmt.Fprintln(stderr, "gridspec describe:", err)
+		return 1
+	}
+	audit, err := describe.Audit(selected.State, result)
+	if err != nil {
+		fmt.Fprintln(stderr, "gridspec describe: encode audit:", err)
+		return 2
+	}
+	auditCID, err := gridwire.RawCID(audit)
+	if err != nil {
+		fmt.Fprintln(stderr, "gridspec describe: identify audit:", err)
+		return 2
+	}
+	if err := current.Repository.Put(context.Background(), auditCID, audit); err != nil {
+		fmt.Fprintln(stderr, "gridspec describe: store audit:", err)
+		return 2
+	}
+	proposal, err := current.ProposeFrom(context.Background(), selected, result.Program, []cid.Cid{auditCID})
+	if err != nil {
+		fmt.Fprintln(stderr, "gridspec describe:", err)
+		return 1
+	}
+	fmt.Fprintf(stdout, "proposal %s\nref %s\ndescribed %d entity(s)\nprovider %s\nresponse %s\naudit %s\n", proposal.Event.CID, proposal.Ref, result.Count, result.Response.Model, result.Response.ID, auditCID)
 	return 0
 }
 

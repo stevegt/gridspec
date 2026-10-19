@@ -51,12 +51,33 @@ map.
 gridspec view --format text
 gridspec view --format dot
 gridspec view --format dot --graph graph.example.detail
+gridspec view --format dot --graph graph.example.detail --label-format '{title}'
+gridspec view --format dot --label-format '{title} [{id}]'
 gridspec view --proposal <proposal-CID> --format text
 ```
 
 The default DOT view is deliberately compact: one node per semantic graph.
 Selecting a graph emits only that graph's nodes and edges. Views can be deleted
-and regenerated without changing specification identity.
+and regenerated without changing specification identity. IDs remain the
+default labels. `--label-format` selects any canonical entity field or nested
+map field, such as `{kind}` or `{attrs.specdot_branch}`; a missing value falls
+back to the semantic ID. Double braces emit literal braces.
+
+Active build-ready graphs, nodes, and edges carry authoritative human-readable
+titles of at most 40 characters. Optional summaries are at most 140 characters.
+Both are signed-state fields, not text inferred while rendering; DOT output
+uses summaries as tooltips. An LLM can fill missing descriptions through an
+unsigned proposal:
+
+```sh
+gridspec describe
+gridspec describe --graph graph.example.detail
+```
+
+The command accepts only a complete, strict JSON description set, constructs
+the replacement transaction itself without changing unrelated fields, and
+links the exact request and response from the proposal event through CAS.
+Review and accept the proposal separately.
 
 ## Legacy migration
 

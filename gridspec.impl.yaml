@@ -98,6 +98,17 @@ bindings:
   - {spec_id: gridspec.signed.commit, package: github.com/promisegrid/gridspec/internal/commitv3, kind: func, name: Build}
   - {spec_id: gridspec.rejected, package: github.com/promisegrid/gridspec/internal/project, kind: method, receiver: Project, name: Accept}
   - {spec_id: gridspec.derived.outputs, package: github.com/promisegrid/gridspec/internal/artifact, kind: func, name: Build}
+  - {spec_id: graph.gridspec.describe, package: github.com/promisegrid/gridspec/internal/describe, kind: package}
+  - {spec_id: gridspec.describe.accepted, package: github.com/promisegrid/gridspec/internal/project, kind: method, receiver: Project, name: Load}
+  - {spec_id: gridspec.describe.select, package: github.com/promisegrid/gridspec/internal/describe, kind: func, name: Pending}
+  - {spec_id: gridspec.describe.complete, package: github.com/promisegrid/gridspec/internal/describe, kind: func, name: Pending}
+  - {spec_id: gridspec.describe.request, package: github.com/promisegrid/gridspec/internal/describe, kind: func, name: Generate}
+  - {spec_id: gridspec.describe.validate, package: github.com/promisegrid/gridspec/internal/describe, kind: func, name: Generate}
+  - {spec_id: gridspec.describe.audit, package: github.com/promisegrid/gridspec/internal/describe, kind: func, name: Audit}
+  - {spec_id: gridspec.describe.transaction, package: github.com/promisegrid/gridspec/internal/describe, kind: func, name: Generate}
+  - {spec_id: gridspec.describe.proposal, package: github.com/promisegrid/gridspec/internal/project, kind: method, receiver: Project, name: ProposeFrom}
+  - {spec_id: gridspec.describe.noop, package: github.com/promisegrid/gridspec/internal/describe, kind: func, name: Generate}
+  - {spec_id: gridspec.describe.failure, package: github.com/promisegrid/gridspec/internal/describe, kind: func, name: Generate}
 
 scenarios:
   - spec_id: scenario.specdot.clean
@@ -224,6 +235,21 @@ exclusions:
       - gridspec.flow.decision.accept
       - gridspec.flow.decision.reject
       - gridspec.flow.accepted.outputs
+
+  - reason: Description-flow edges are relationships covered by the bound selection, generation, audit, and proposal objects and focused tests.
+    spec_ids:
+      - gridspec.describe.flow.accepted.select
+      - gridspec.describe.flow.select.complete
+      - gridspec.describe.flow.complete.noop
+      - gridspec.describe.flow.complete.request
+      - gridspec.describe.flow.request.validate
+      - gridspec.describe.flow.request.failure
+      - gridspec.describe.flow.validate.audit
+      - gridspec.describe.flow.validate.failure
+      - gridspec.describe.flow.audit.transaction
+      - gridspec.describe.flow.audit.failure
+      - gridspec.describe.flow.transaction.proposal
+      - gridspec.describe.flow.transaction.failure
 
   - reason: Architecture decisions constrain the implementation but intentionally have no one-to-one Go object.
     spec_ids:
@@ -382,4 +408,4 @@ coverage:
     command: 0
     go_test: 21
     trace: 0
-  max_exclusions: 135
+  max_exclusions: 147
