@@ -1,4 +1,4 @@
-// Package model defines specdot's canonical, generator-facing IR.
+// Package model defines GridSpec's derived checker-facing compatibility IR.
 package model
 
 import (
@@ -8,7 +8,7 @@ import (
 	"sort"
 )
 
-const IRSchema = "specdot.ir/v1"
+const IRSchema = "gridspec.ir/v1"
 
 type Source struct {
 	Path   string `json:"path"`
@@ -22,7 +22,7 @@ type Location struct {
 	Column int    `json:"column,omitempty"`
 }
 
-// IR is the stable handoff consumed by vet today and specdot build later.
+// IR is derived from transactional state for deterministic vet and conformance.
 type IR struct {
 	Schema      string     `json:"schema"`
 	Module      string     `json:"module"`

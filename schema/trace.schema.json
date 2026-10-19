@@ -1,12 +1,12 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://promisegrid.github.io/specdot/schema/trace.schema.json",
-  "title": "specdot semantic trace event v1",
+  "$id": "https://promisegrid.github.io/gridspec/schema/trace.schema.json",
+  "title": "GridSpec semantic trace event v1",
   "type": "object",
   "additionalProperties": false,
   "required": ["schema", "scenario_id", "spec_id", "sequence"],
   "properties": {
-    "schema": {"const": "specdot.trace/v1"},
+    "schema": {"const": "gridspec.trace/v1"},
     "scenario_id": {"type": "string", "minLength": 1},
     "spec_id": {"type": "string", "minLength": 1},
     "phase": {"type": "string"},

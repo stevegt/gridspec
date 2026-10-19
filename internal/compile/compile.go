@@ -6,9 +6,9 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/promisegrid/specdot/internal/config"
-	"github.com/promisegrid/specdot/internal/model"
-	"github.com/promisegrid/specdot/internal/source"
+	"github.com/promisegrid/gridspec/internal/config"
+	"github.com/promisegrid/gridspec/internal/model"
+	"github.com/promisegrid/gridspec/internal/source"
 )
 
 // IR builds the effective contract set. Markdown contracts take precedence over
@@ -63,7 +63,7 @@ func IR(cfg config.Config, profile string, parsed source.Parsed) model.IR {
 
 func contractForGraph(graph model.Graph) model.Contract {
 	c := model.Contract{
-		Schema: "specdot.contract/v1", For: graph.ID, Kind: graph.Kind,
+		Schema: "gridspec.contract/v1", For: graph.ID, Kind: graph.Kind,
 		Status: graph.Status, Location: graph.Location,
 	}
 	if graph.Kind == "machine" {
@@ -80,7 +80,7 @@ func contractForGraph(graph model.Graph) model.Contract {
 
 func contractForElement(e model.Element) model.Contract {
 	c := model.Contract{
-		Schema: "specdot.contract/v1", For: e.ID, Kind: e.Kind,
+		Schema: "gridspec.contract/v1", For: e.ID, Kind: e.Kind,
 		Status: e.Status, Location: e.Location,
 	}
 	switch e.Kind {

@@ -4,7 +4,7 @@ import (
 	"bytes"
 	"strings"
 
-	"github.com/promisegrid/specdot/internal/model"
+	"github.com/promisegrid/gridspec/internal/model"
 )
 
 type lineIndex struct {

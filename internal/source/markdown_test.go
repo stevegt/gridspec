@@ -3,7 +3,7 @@ package source
 import (
 	"testing"
 
-	"github.com/promisegrid/specdot/internal/diag"
+	"github.com/promisegrid/gridspec/internal/diag"
 )
 
 func TestContractRejectsDuplicateYAMLKeys(t *testing.T) {

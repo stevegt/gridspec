@@ -4,9 +4,9 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/promisegrid/specdot/internal/diag"
-	"github.com/promisegrid/specdot/internal/expr"
-	"github.com/promisegrid/specdot/internal/model"
+	"github.com/promisegrid/gridspec/internal/diag"
+	"github.com/promisegrid/gridspec/internal/expr"
+	"github.com/promisegrid/gridspec/internal/model"
 )
 
 type namedPromise struct {

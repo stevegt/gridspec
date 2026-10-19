@@ -5,7 +5,7 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/promisegrid/specdot/internal/model"
+	"github.com/promisegrid/gridspec/internal/model"
 )
 
 func TestRunRequiresEvidenceOrExplicitExclusion(t *testing.T) {
@@ -13,7 +13,7 @@ func TestRunRequiresEvidenceOrExplicitExclusion(t *testing.T) {
 		Schema: model.IRSchema, Module: "example", Digest: "sha256:test",
 		Graphs: []model.Graph{{ID: "graph.example", Kind: "decision", Status: "active", Location: model.Location{File: "example.dot", Line: 1}}},
 	}
-	cfg := Config{Name: "example-go", Path: "specdot.impl.yaml", Coverage: CoveragePolicy{Floors: map[string]float64{}}}
+	cfg := Config{Name: "example-go", Path: "gridspec.impl.yaml", Coverage: CoveragePolicy{Floors: map[string]float64{}}}
 	report := Run(cfg, ir, RunOptions{IgnoreBaseline: true})
 	if !hasRule(report, "SDC400") {
 		t.Fatalf("expected unclassified-ID diagnostic: %#v", report.Diagnostics)
@@ -37,7 +37,7 @@ func TestBaselineRatchetsEvidenceClass(t *testing.T) {
 	}
 	ir := model.IR{Schema: model.IRSchema, Module: "example", Digest: "new", Graphs: []model.Graph{{ID: "scenario.example", Kind: "scenario", Status: "active", Location: model.Location{File: "scenario.dot"}}}}
 	cfg := Config{
-		Name: "example-go", Path: filepath.Join(dir, "specdot.impl.yaml"), Dir: dir,
+		Name: "example-go", Path: filepath.Join(dir, "gridspec.impl.yaml"), Dir: dir,
 		Exclusions: []Exclusion{{SpecIDs: []string{"scenario.example"}, Reason: "test setup"}},
 		Coverage:   CoveragePolicy{Baseline: "baseline.json", Floors: map[string]float64{}},
 	}
@@ -51,8 +51,8 @@ func TestBaselineRatchetsEvidenceClass(t *testing.T) {
 }
 
 func TestSidecarRejectsUnknownFields(t *testing.T) {
-	path := filepath.Join(t.TempDir(), "specdot.impl.yaml")
-	data := []byte("schema: specdot.implementation/v1\nname: example\ngo: {}\ncoverage: {}\nunknown: true\n")
+	path := filepath.Join(t.TempDir(), "gridspec.impl.yaml")
+	data := []byte("schema: gridspec.implementation/v1\nname: example\ngo: {}\ncoverage: {}\nunknown: true\n")
 	if err := os.WriteFile(path, data, 0o600); err != nil {
 		t.Fatal(err)
 	}
@@ -62,8 +62,8 @@ func TestSidecarRejectsUnknownFields(t *testing.T) {
 }
 
 func TestSidecarRequiresCoverageRatchet(t *testing.T) {
-	path := filepath.Join(t.TempDir(), "specdot.impl.yaml")
-	data := []byte("schema: specdot.implementation/v1\nname: example\ngo: {}\ncoverage: {}\n")
+	path := filepath.Join(t.TempDir(), "gridspec.impl.yaml")
+	data := []byte("schema: gridspec.implementation/v1\nname: example\ngo: {}\ncoverage: {}\n")
 	if err := os.WriteFile(path, data, 0o600); err != nil {
 		t.Fatal(err)
 	}

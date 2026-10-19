@@ -7,7 +7,7 @@ import (
 	"io"
 	"sort"
 
-	"github.com/promisegrid/specdot/internal/diag"
+	"github.com/promisegrid/gridspec/internal/diag"
 )
 
 type Summary struct {
@@ -59,7 +59,7 @@ func writeJSON(w io.Writer, module, digest string, ds []diag.Diagnostic) error {
 		Digest      string            `json:"digest"`
 		Summary     Summary           `json:"summary"`
 		Diagnostics []diag.Diagnostic `json:"diagnostics"`
-	}{"specdot.diagnostics/v1", module, digest, Count(ds), ds}
+	}{"gridspec.diagnostics/v1", module, digest, Count(ds), ds}
 	encoder := json.NewEncoder(w)
 	encoder.SetIndent("", "  ")
 	return encoder.Encode(payload)
@@ -140,7 +140,7 @@ func writeSARIF(w io.Writer, module string, ds []diag.Diagnostic) error {
 	for i, id := range ids {
 		sarifRules[i] = sarifRule{ID: id}
 	}
-	log := sarifLog{Version: "2.1.0", Schema: "https://json.schemastore.org/sarif-2.1.0.json", Runs: []sarifRun{{Tool: sarifTool{Driver: sarifDriver{Name: "specdot", Rules: sarifRules}}, Results: results}}}
+	log := sarifLog{Version: "2.1.0", Schema: "https://json.schemastore.org/sarif-2.1.0.json", Runs: []sarifRun{{Tool: sarifTool{Driver: sarifDriver{Name: "gridspec", Rules: sarifRules}}, Results: results}}}
 	encoder := json.NewEncoder(w)
 	encoder.SetIndent("", "  ")
 	return encoder.Encode(log)

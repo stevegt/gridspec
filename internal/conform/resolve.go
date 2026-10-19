@@ -5,8 +5,8 @@ import (
 	"go/types"
 	"sort"
 
-	"github.com/promisegrid/specdot/internal/diag"
-	"github.com/promisegrid/specdot/internal/model"
+	"github.com/promisegrid/gridspec/internal/diag"
+	"github.com/promisegrid/gridspec/internal/model"
 	"golang.org/x/tools/go/packages"
 )
 

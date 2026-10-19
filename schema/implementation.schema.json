@@ -1,12 +1,12 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://promisegrid.github.io/specdot/schema/implementation.schema.json",
-  "title": "specdot implementation sidecar v1",
+  "$id": "https://promisegrid.github.io/gridspec/schema/implementation.schema.json",
+  "title": "GridSpec implementation sidecar v1",
   "type": "object",
   "additionalProperties": false,
   "required": ["schema", "name", "go", "coverage"],
   "properties": {
-    "schema": {"const": "specdot.implementation/v1"},
+    "schema": {"const": "gridspec.implementation/v1"},
     "name": {"type": "string", "minLength": 1},
     "spec_config": {"type": "string"},
     "profile": {"type": "string"},

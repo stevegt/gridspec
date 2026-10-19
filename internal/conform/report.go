@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"io"
 
-	"github.com/promisegrid/specdot/internal/diag"
+	"github.com/promisegrid/gridspec/internal/diag"
 )
 
 func WriteReport(w io.Writer, format string, report Report) error {

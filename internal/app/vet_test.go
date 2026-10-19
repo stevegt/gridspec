@@ -30,7 +30,7 @@ func TestVetSelfSpecificationBuildReady(t *testing.T) {
 	if err := json.Unmarshal(stdout.Bytes(), &result); err != nil {
 		t.Fatalf("decode self-spec report: %v\n%s", err, stdout.String())
 	}
-	if result.Module != "github.com/promisegrid/specdot" {
+	if result.Module != "github.com/promisegrid/gridspec" {
 		t.Fatalf("module = %q", result.Module)
 	}
 	if result.Summary.Errors != 0 || result.Summary.Warnings != 0 || result.Summary.Notes != 0 {
@@ -89,33 +89,23 @@ func TestEmittedIRIsDeterministic(t *testing.T) {
 	}
 }
 
-func TestConformSelfImplementation(t *testing.T) {
+func TestVetLegacyConfigFailure(t *testing.T) {
+	var stdout, stderr bytes.Buffer
+	code := Vet(VetOptions{ConfigPath: filepath.Join(t.TempDir(), "missing.yaml"), Stdout: &stdout, Stderr: &stderr})
+	if code != 2 || !strings.Contains(stderr.String(), "specdot vet:") {
+		t.Fatalf("code=%d stdout=%s stderr=%s", code, stdout.String(), stderr.String())
+	}
+}
+
+func TestVetLegacyEmitFailure(t *testing.T) {
 	root := filepath.Clean(filepath.Join("..", ".."))
 	var stdout, stderr bytes.Buffer
-	code := Conform(ConformOptions{
-		ConfigPath:         filepath.Join(root, "specdot.yaml"),
-		ImplementationPath: filepath.Join(root, "specdot.impl.yaml"),
-		Format:             "json", Stdout: &stdout, Stderr: &stderr,
+	code := Vet(VetOptions{
+		ConfigPath: filepath.Join(root, "examples", "healthy", "specdot.yaml"),
+		Profile:    "default", Format: "text", EmitIR: root,
+		Stdout: &stdout, Stderr: &stderr,
 	})
-	if code != 0 {
-		t.Fatalf("Conform() code = %d, stderr=%s stdout=%s", code, stderr.String(), stdout.String())
-	}
-	var result struct {
-		Schema      string `json:"schema"`
-		Diagnostics []any  `json:"diagnostics"`
-		Coverage    map[string]struct {
-			Covered int `json:"covered"`
-		} `json:"coverage"`
-	}
-	if err := json.Unmarshal(stdout.Bytes(), &result); err != nil {
-		t.Fatalf("decode conformance report: %v\n%s", err, stdout.String())
-	}
-	if result.Schema != "specdot.conformance/v1" || len(result.Diagnostics) != 0 {
-		t.Fatalf("unexpected conformance result: %#v", result)
-	}
-	for _, class := range []string{"static", "command", "go_test", "trace"} {
-		if result.Coverage[class].Covered == 0 {
-			t.Errorf("%s evidence is empty", class)
-		}
+	if code != 2 || !strings.Contains(stderr.String(), "emit IR") {
+		t.Fatalf("code=%d stdout=%s stderr=%s", code, stdout.String(), stderr.String())
 	}
 }

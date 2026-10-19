@@ -8,8 +8,8 @@ import (
 	"path/filepath"
 	"sort"
 
-	"github.com/promisegrid/specdot/internal/diag"
-	"github.com/promisegrid/specdot/internal/model"
+	"github.com/promisegrid/gridspec/internal/diag"
+	"github.com/promisegrid/gridspec/internal/model"
 )
 
 type RunOptions struct {
@@ -364,7 +364,7 @@ func WriteBaseline(path string, baseline Baseline) error {
 	if err := os.MkdirAll(filepath.Dir(abs), 0o755); err != nil {
 		return err
 	}
-	tmp, err := os.CreateTemp(filepath.Dir(abs), ".specdot-baseline-*")
+	tmp, err := os.CreateTemp(filepath.Dir(abs), ".gridspec-baseline-*")
 	if err != nil {
 		return err
 	}

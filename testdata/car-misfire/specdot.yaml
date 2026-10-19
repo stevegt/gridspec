@@ -1,3 +1,4 @@
+# Deliberately invalid legacy regression fixture.
 schema: specdot/v1
 module: example.invalid.car-misfire
 roots: [.]

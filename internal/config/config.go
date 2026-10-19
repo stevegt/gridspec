@@ -1,4 +1,4 @@
-// Package config loads the specdot module manifest.
+// Package config loads the legacy Specdot module manifest for migration.
 package config
 
 import (
@@ -80,6 +80,20 @@ func defaults() Config {
 		},
 		LinkPolicy: LinkPolicy{RemoteTimeout: 5 * time.Second},
 	}
+}
+
+// Builtin returns an in-memory GridSpec checker configuration and one of the
+// standard validation profiles. It has no source-discovery authority.
+func Builtin(module, profile string) (Config, Profile, error) {
+	if module == "" {
+		return Config{}, Profile{}, errors.New("module is required")
+	}
+	configuration := defaults()
+	configuration.Module = module
+	configuration.Path = "gridspec://" + module
+	configuration.Dir = "."
+	selected, err := configuration.SelectedProfile(profile)
+	return configuration, selected, err
 }
 
 // Discover walks upward from start and returns the first module manifest.

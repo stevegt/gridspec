@@ -1,5 +1,6 @@
+# Legacy import example for `gridspec import legacy`.
 schema: specdot/v1
-module: github.com/promisegrid/specdot/examples/healthy
+module: github.com/promisegrid/gridspec/examples/healthy
 roots:
   - .
 include:

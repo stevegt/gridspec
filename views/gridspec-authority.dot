@@ -1,0 +1,22 @@
+digraph gridspec_view {
+  graph [label="github.com/promisegrid/gridspec (generated view)", labelloc=t];
+  node [shape=box];
+  "id:gridspec.acceptance.decision" [label="gridspec.acceptance.decision\\ndecision"];
+  "id:gridspec.derived.outputs" [label="gridspec.derived.outputs\\nfinal"];
+  "id:gridspec.materialized.state" [label="gridspec.materialized.state\\nprocess"];
+  "id:gridspec.proposal" [label="gridspec.proposal\\nprocess"];
+  "id:gridspec.rejected" [label="gridspec.rejected\\nfinal"];
+  "id:gridspec.replay" [label="gridspec.replay\\nprocess"];
+  "id:gridspec.signed.commit" [label="gridspec.signed.commit\\nprocess"];
+  "id:gridspec.transaction" [label="gridspec.transaction\\nstart"];
+  "id:gridspec.vet" [label="gridspec.vet\\nprocess"];
+  "id:gridspec.signed.commit" -> "id:gridspec.derived.outputs" [label="gridspec.flow.accepted.outputs"];
+  "id:gridspec.acceptance.decision" -> "id:gridspec.signed.commit" [label="gridspec.flow.decision.accept"];
+  "id:gridspec.acceptance.decision" -> "id:gridspec.rejected" [label="gridspec.flow.decision.reject"];
+  "id:gridspec.materialized.state" -> "id:gridspec.vet" [label="gridspec.flow.materialize.vet"];
+  "id:gridspec.proposal" -> "id:gridspec.acceptance.decision" [label="gridspec.flow.proposal.decision"];
+  "id:gridspec.proposal" -> "id:gridspec.derived.outputs" [label="gridspec.flow.proposal.preview"];
+  "id:gridspec.replay" -> "id:gridspec.materialized.state" [label="gridspec.flow.replay.materialize"];
+  "id:gridspec.transaction" -> "id:gridspec.replay" [label="gridspec.flow.transaction.replay"];
+  "id:gridspec.vet" -> "id:gridspec.proposal" [label="gridspec.flow.vet.proposal"];
+}

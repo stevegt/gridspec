@@ -1,82 +1,150 @@
-# specdot
+# GridSpec
 
-`specdot vet` treats system specifications like source code. It compiles DOT
-graphs and their linked Markdown contracts into deterministic IR, links symbols
-across the complete module, runs semantic lint passes, and explores finite
-state-machine profiles with a native Go checker.
+GridSpec treats specifications as source code and Go as compiler output. Its
+source of truth is a finite transactional language over immutable Grid-CBOR
+state. An LLM can compile specs into Go or disassemble Go into a proposed spec
+transaction, but deterministic replay, semantic checks, tests, and a separate
+signed acceptance decide what becomes authoritative.
 
-The important distinction is that a diagram which renders is not necessarily a
-specification which links. `specdot` rejects missing boundary contracts,
-duplicate semantic IDs, dead flow paths, broken Markdown URLs, unmatched
-promises, ambiguous state transitions, undefined data identity, and incomplete
-or contradictory side-effect lifecycles.
+DOT and text are generated views. Legacy Specdot DOT/Markdown modules can be
+imported, but they are no longer the primary editing format.
 
-## Build and run
+Transaction text is a change recipe, not a complete compiler input. GridSpec
+replays it against a base CID and materializes the result in its Git-backed CAS;
+views, checks, and generators then reload that exact state CID. This is similar
+to building a Dockerfile into a digest-addressed local image before another
+stage consumes it.
 
-```sh
-go build -o specdot ./cmd/specdot
-./specdot vet --profile build
-./specdot vet --profile build --emit-ir specdot.ir.json
-./specdot vet --format sarif > specdot.sarif
-./specdot conform
-```
-
-With no paths, `vet` discovers `specdot.yaml` upward and compiles every configured
-root. Passing a path narrows the requested entry point but does not narrow the
-symbol table: cross-file validation always sees the complete module.
-
-Exit status is `0` for a successful vet, `1` for validation errors or required
-inconclusive proofs, and `2` for usage, configuration, or internal failures.
-
-`specdot conform` validates the same canonical IR and then compares it with an
-existing Go implementation using a strict `specdot.impl.yaml` sidecar. It
-resolves Go symbols, runs isolated command fixtures and exact Go tests, checks
-optional semantic traces, and enforces coverage floors plus a reviewed
-baseline. Conformance executes repository code and must only be run on trusted
-sidecars and source trees.
-
-The repository's root manifest vets Specdot's own interfaces, data model,
-pipeline, finite checker, lifecycle, effects, scenarios, and bootstrap boundary:
+## Build and initialize
 
 ```sh
-go run ./cmd/specdot vet --profile build
-go run ./cmd/specdot conform
+go build -o gridspec ./cmd/gridspec
+gridspec init --project example.com/my/system
 ```
 
-The smaller healthy example remains available as an isolated fixture:
+`init` creates an Ed25519 key with mode `0600` under `.git/gridspec/keys`, an
+initial transaction event, and a signed Grid Commit v3 selection. The key is
+never placed in the content-addressed closure or sent to an LLM.
+
+Write or generate a transaction, publish it as a proposal, and explicitly
+accept it:
 
 ```sh
-go run ./cmd/specdot vet --config examples/healthy/specdot.yaml --profile build
+gridspec propose change.gridspec
+gridspec accept <proposal-CID>
+gridspec vet --profile build
 ```
 
-The regression fixture derived from the CAR incident is deliberately invalid:
+`propose` deterministically replays and vets the candidate state before it
+publishes a proposal ref. `accept` reloads and vets that immutable proposal
+again before signing the new complete timeline selection. The final `vet` is a
+convenient explicit report of the now-accepted state.
+
+Tool and LLM proposals are unsigned by default. `propose --authored` adds an
+authorship signature when a person intentionally claims the transaction. In
+both cases acceptance is a different signature over a complete timeline-head
+map.
+
+## Views
 
 ```sh
-go run ./cmd/specdot vet --config testdata/car-misfire/specdot.yaml
+gridspec view --format text
+gridspec view --format dot
+gridspec view --format dot --graph graph.example.detail
+gridspec view --proposal <proposal-CID> --format text
 ```
 
-It demonstrates three general failures: conflating logical and physical
-identity, giving two agents unselected publication authority over one exclusive
-resource, and deleting an artifact on outcomes where its contract requires
-retention.
+The default DOT view is deliberately compact: one node per semantic graph.
+Selecting a graph emits only that graph's nodes and edges. Views can be deleted
+and regenerated without changing specification identity.
 
-See [the self-specification](specs/vet.dot), [bootstrap decision](specs/architecture.md),
-[language reference](docs/language.md), [rule reference](docs/rules.md), and
-[healthy example](examples/healthy/worker.dot).
+## Legacy migration
 
-## Scope
+```sh
+gridspec init --project example.com/legacy/system
+gridspec import legacy --config specdot.yaml --profile build
+gridspec accept <proposal-CID>
+```
 
-Version 1 implements `specdot vet`, emits `specdot.ir/v1`, and compares that IR
-with existing Go code through `specdot conform`. A future `specdot build` can
-consume the sealed IR to generate code, tests, and documentation. The
-build-readiness profile exists now so that generation does not have to guess
-about interfaces, state, data, faults, persistence, trust, or destructive
-behavior.
+Migration first runs the existing completeness, uniqueness, URL, promise,
+data-identity, effect-lifecycle, finite-state, and car-misfire checks. A broken
+legacy module is not silently converted. The imported transaction is a proposal
+until separately accepted.
 
-The self-specification and deterministic conformance report are dogfooding and
-consistency gates. They do not claim that validation by the current Go
-implementation proves that implementation correct; independent tests remain
-part of the bootstrap authority until a future self-hosting design is reviewed.
+## Go compiler, disassembler, and conformance
 
-The implementation is Go throughout. Graphviz is not a runtime dependency and
-there is no Java-based verifier.
+Set `OPENAI_API_KEY`; optionally set `GRIDSPEC_MODEL` (default `gpt-5.4`) or
+`GRIDSPEC_OPENAI_BASE_URL`. GridSpec uses the OpenAI Responses API through a
+provider interface that can be replaced in tests.
+
+```sh
+# Existing Go -> unsigned spec proposal
+gridspec disassemble --source .
+
+# Accepted specs -> a new, independently tested Go tree
+gridspec build --output ../generated-system
+
+# Current vetted proposal -> independently tested preview tree
+gridspec build --proposal <proposal-CID> --output ../preview-system
+
+# Existing Go vs accepted specs, without regeneration
+gridspec conform --implementation gridspec.impl.yaml
+gridspec conform --implementation gridspec.impl.yaml --format json --record
+
+# Read-only comparison against a current proposal
+gridspec conform --proposal <proposal-CID> --implementation gridspec.impl.yaml
+
+# Specs -> changes only to hash-tracked generated files
+gridspec update --source .          # dry run
+gridspec update --source . --write  # tests and rolls back on failure
+gridspec update --proposal <proposal-CID> --source . # preview only
+```
+
+Generated trees contain a `gridspec.generated/v2` manifest in
+`.gridspec-generated.json`, recording whether the input was accepted or
+proposed, its accepted-base commit, event and state CIDs, owned paths, content
+hashes, and contributing spec IDs. Version 1 manifests remain readable. `update`
+refuses to overwrite an unowned file or a generated file changed by hand. New
+update files must be under `gridspec_gen/`; proposal updates are dry-run only.
+Successful builds and update runs also publish an unsigned derived-artifact
+message under
+`refs/gridspec/candidates/...`, binding the accepted commit, normalized output
+digest, provider provenance, exact CAS input CIDs, and verification evidence.
+Proposal builds use preview targets and name both the proposal event and result
+state. A candidate never changes accepted specification state.
+
+Conformance is evidence, not regeneration: it resolves Go symbols, executes
+isolated command fixtures and exact Go tests, checks optional semantic traces,
+and enforces coverage floors, reviewed exclusions, and a baseline. These are
+bounded observations, not a proof of arbitrary program equivalence.
+`--record` explicitly publishes the exact report, checker configuration,
+implementation digest, evidence classes, exclusions, and diagnostics as an
+unsigned content-addressed candidate; ordinary conformance remains read-only.
+
+## Git transport
+
+GridSpec blocks are Git blobs in carrier commits. `ROOT` names the semantic CID;
+Git commit IDs only provide transport and atomic refs.
+
+```sh
+gridspec fetch origin
+gridspec push origin
+```
+
+These commands transfer only GridSpec project, proposal, and candidate refs,
+not source branches. Fetch writes remote-tracking refs below
+`refs/gridspec/remotes/` and never overwrites a local accepted ref. Every read
+rehashes every block against its CID. Local ref advancement uses compare-and-swap.
+
+## Guarantees and limits
+
+The transaction language always terminates: it has no loops, recursion, I/O,
+clocks, randomness, or process execution. General Go equivalence remains
+undecidable. Compile/disassemble round trips are therefore partial and may be
+lossy; the supported claim is agreement on declared contracts and selected
+evidence.
+
+Read [the architecture and theory boundary](docs/architecture.md), the
+[transaction grammar](protocols/transaction-language-v1.md), the
+[self-specification guide](specs/README.md), and the frozen protocol documents
+under [`protocols/`](protocols/).

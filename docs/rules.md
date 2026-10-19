@@ -4,6 +4,10 @@ Rule IDs are stable machine-readable API. Text may become clearer without
 changing the condition represented by an ID. JSON and SARIF output preserve the
 same IDs.
 
+Rules `SDV000` onward run on the semantic state derived by replay. The DOT and
+Markdown syntax ranges are also used before `import legacy`; they do not make
+those formats authoritative.
+
 | Range | Area | What is checked |
 | --- | --- | --- |
 | `SDV000`–`SDV025` | DOT syntax | A non-empty graph corpus, parseability, exactly one top-level graph per file, semantic graph metadata, directed executable graphs, explicit nodes, one declaration per DOT node, IDs on every node/edge, and unambiguous edge segments. |
@@ -44,7 +48,7 @@ The safety-critical non-waivable set is defined in
 overrides can disable advisory rules, but they should be reviewed like compiler
 flag changes.
 
-`specdot conform` uses a separate stable `SDCxxx` namespace: `SDC0xx` covers
+`gridspec conform` uses a separate stable `SDCxxx` namespace: `SDC0xx` covers
 sidecar references, `SDC1xx` Go symbols, `SDC2xx` scenario execution, `SDC3xx`
 semantic traces, and `SDC4xx` classification, coverage, exclusions, and
 baseline regressions. Conformance findings are non-waivable because the

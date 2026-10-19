@@ -1,0 +1,108 @@
+gridspec 1
+assert exists graph decision.specdot.bootstrap
+put graph graph.gridspec.authority {
+  kind = "algorithm",
+  status = "active",
+  directed = true,
+  strict = true,
+  URL = "../docs/architecture.md",
+  attrs = {},
+  location = { file = "views/gridspec-authority.dot", line = 1, column = 1 }
+}
+put node gridspec.transaction {
+  graph_id = "graph.gridspec.authority",
+  kind = "start",
+  status = "active",
+  attrs = { specdot_initial = "true" },
+  location = { file = "views/gridspec-authority.dot", line = 3, column = 1 }
+}
+put node gridspec.replay {
+  graph_id = "graph.gridspec.authority",
+  kind = "process",
+  status = "active",
+  attrs = {},
+  location = { file = "views/gridspec-authority.dot", line = 4, column = 1 }
+}
+put node gridspec.vet {
+  graph_id = "graph.gridspec.authority",
+  kind = "process",
+  status = "active",
+  attrs = {},
+  location = { file = "views/gridspec-authority.dot", line = 5, column = 1 }
+}
+put node gridspec.proposal {
+  graph_id = "graph.gridspec.authority",
+  kind = "process",
+  status = "active",
+  attrs = {},
+  location = { file = "views/gridspec-authority.dot", line = 6, column = 1 }
+}
+put node gridspec.acceptance.decision {
+  graph_id = "graph.gridspec.authority",
+  kind = "decision",
+  status = "active",
+  attrs = {},
+  location = { file = "views/gridspec-authority.dot", line = 7, column = 1 }
+}
+put node gridspec.signed.commit {
+  graph_id = "graph.gridspec.authority",
+  kind = "final",
+  status = "active",
+  attrs = { specdot_final = "true" },
+  location = { file = "views/gridspec-authority.dot", line = 8, column = 1 }
+}
+put node gridspec.rejected {
+  graph_id = "graph.gridspec.authority",
+  kind = "final",
+  status = "active",
+  attrs = { specdot_final = "true" },
+  location = { file = "views/gridspec-authority.dot", line = 9, column = 1 }
+}
+put edge gridspec.flow.transaction.replay {
+  graph_id = "graph.gridspec.authority", kind = "flow", status = "active",
+  from = "gridspec.transaction", to = "gridspec.replay", attrs = {},
+  location = { file = "views/gridspec-authority.dot", line = 11, column = 1 }
+}
+put edge gridspec.flow.replay.vet {
+  graph_id = "graph.gridspec.authority", kind = "flow", status = "active",
+  from = "gridspec.replay", to = "gridspec.vet", attrs = {},
+  location = { file = "views/gridspec-authority.dot", line = 12, column = 1 }
+}
+put edge gridspec.flow.vet.proposal {
+  graph_id = "graph.gridspec.authority", kind = "flow", status = "active",
+  from = "gridspec.vet", to = "gridspec.proposal", attrs = {},
+  location = { file = "views/gridspec-authority.dot", line = 13, column = 1 }
+}
+put edge gridspec.flow.proposal.decision {
+  graph_id = "graph.gridspec.authority", kind = "flow", status = "active",
+  from = "gridspec.proposal", to = "gridspec.acceptance.decision", attrs = {},
+  location = { file = "views/gridspec-authority.dot", line = 14, column = 1 }
+}
+put edge gridspec.flow.decision.accept {
+  graph_id = "graph.gridspec.authority", kind = "flow", status = "active",
+  from = "gridspec.acceptance.decision", to = "gridspec.signed.commit",
+  attrs = { specdot_branch = "accepted" },
+  location = { file = "views/gridspec-authority.dot", line = 15, column = 1 }
+}
+put edge gridspec.flow.decision.reject {
+  graph_id = "graph.gridspec.authority", kind = "flow", status = "active",
+  from = "gridspec.acceptance.decision", to = "gridspec.rejected",
+  attrs = { specdot_branch = "rejected" },
+  location = { file = "views/gridspec-authority.dot", line = 16, column = 1 }
+}
+put contract graph.gridspec.authority {
+  schema = "gridspec.contract/v1",
+  kind = "algorithm",
+  status = "active",
+  summary = "Transactions are primary authority; deterministic replay and vetting produce proposals; only a signed complete Grid Commit v3 selection changes accepted state.",
+  metadata = {
+    authority = "signed Grid Commit v3 over complete timeline heads",
+    source_language = "GridSpec transaction language v1 over Grid-CBOR state",
+    compiler = "LLM-assisted translation followed by deterministic validation and tests",
+    disassembler = "LLM-assisted reconstruction that produces a reviewable proposal",
+    equivalence = "bounded conformance evidence, never a general proof of program equivalence",
+    carrier = "Git objects and refs carry CID-addressed Grid closures but do not define semantic identity",
+    llm_trust = "LLMs propose transformations and never receive signing keys or acceptance authority"
+  },
+  location = { file = "docs/architecture.md", line = 1, column = 1 }
+}

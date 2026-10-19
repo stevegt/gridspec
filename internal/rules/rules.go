@@ -1,4 +1,4 @@
-// Package rules implements specdot's semantic vet passes.
+// Package rules implements GridSpec's semantic vet passes.
 package rules
 
 import (
@@ -8,10 +8,10 @@ import (
 	"strings"
 	"time"
 
-	"github.com/promisegrid/specdot/internal/config"
-	"github.com/promisegrid/specdot/internal/diag"
-	"github.com/promisegrid/specdot/internal/model"
-	"github.com/promisegrid/specdot/internal/source"
+	"github.com/promisegrid/gridspec/internal/config"
+	"github.com/promisegrid/gridspec/internal/diag"
+	"github.com/promisegrid/gridspec/internal/model"
+	"github.com/promisegrid/gridspec/internal/source"
 )
 
 type Context struct {
@@ -42,7 +42,7 @@ func Run(ctx Context) ([]diag.Diagnostic, []model.Binding) {
 	}
 	idx, ds := buildIndex(ctx)
 	if len(ctx.IR.Graphs) == 0 {
-		ds = append(ds, diagnostic("SDV000", diag.SeverityError, model.Location{File: ctx.Config.Path}, "module contains no DOT graphs", "add a .dot file under a configured root or fix include/exclude patterns", "", false))
+		ds = append(ds, diagnostic("SDV000", diag.SeverityError, model.Location{File: ctx.Config.Path}, "module contains no semantic graphs", "add at least one graph entity in a transaction", "", false))
 	}
 	ds = append(ds, checkLinks(ctx, idx)...)
 	ds = append(ds, checkGeneric(ctx, idx)...)

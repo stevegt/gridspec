@@ -1,4 +1,4 @@
-// Package checker implements specdot's native bounded EFSM verifier.
+// Package checker implements GridSpec's native bounded EFSM verifier.
 package checker
 
 import (
@@ -10,10 +10,10 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/promisegrid/specdot/internal/config"
-	"github.com/promisegrid/specdot/internal/diag"
-	"github.com/promisegrid/specdot/internal/expr"
-	"github.com/promisegrid/specdot/internal/model"
+	"github.com/promisegrid/gridspec/internal/config"
+	"github.com/promisegrid/gridspec/internal/diag"
+	"github.com/promisegrid/gridspec/internal/expr"
+	"github.com/promisegrid/gridspec/internal/model"
 )
 
 type machine struct {

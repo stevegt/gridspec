@@ -3,8 +3,8 @@ package rules
 import (
 	"fmt"
 
-	"github.com/promisegrid/specdot/internal/diag"
-	"github.com/promisegrid/specdot/internal/model"
+	"github.com/promisegrid/gridspec/internal/diag"
+	"github.com/promisegrid/gridspec/internal/model"
 )
 
 func checkFlowGraphs(ctx Context, idx Index) []diag.Diagnostic {

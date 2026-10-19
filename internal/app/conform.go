@@ -6,9 +6,9 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/promisegrid/specdot/internal/config"
-	impl "github.com/promisegrid/specdot/internal/conform"
-	"github.com/promisegrid/specdot/internal/diag"
+	"github.com/promisegrid/gridspec/internal/config"
+	impl "github.com/promisegrid/gridspec/internal/conform"
+	"github.com/promisegrid/gridspec/internal/diag"
 )
 
 type ConformOptions struct {

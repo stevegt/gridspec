@@ -1,4 +1,4 @@
-// Package diag defines stable, source-addressed diagnostics emitted by specdot.
+// Package diag defines stable, source-addressed diagnostics emitted by GridSpec.
 package diag
 
 import (

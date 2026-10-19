@@ -8,8 +8,8 @@ import (
 	"strings"
 	"unicode"
 
-	"github.com/promisegrid/specdot/internal/diag"
-	"github.com/promisegrid/specdot/internal/model"
+	"github.com/promisegrid/gridspec/internal/diag"
+	"github.com/promisegrid/gridspec/internal/model"
 	"github.com/yuin/goldmark"
 	mdast "github.com/yuin/goldmark/ast"
 	"github.com/yuin/goldmark/text"
@@ -17,7 +17,7 @@ import (
 )
 
 func parseMarkdown(f File) (Document, []diag.Diagnostic) {
-	doc := Document{Path: f.Rel, Abs: f.Abs, Anchors: make(map[string]int)}
+	doc := Document{Path: f.Rel, Abs: f.Abs, Content: string(f.Data), Anchors: make(map[string]int)}
 	idx := newLineIndex(f.Rel, f.Data)
 	root := goldmark.New().Parser().Parse(text.NewReader(f.Data))
 	var ds []diag.Diagnostic
@@ -65,6 +65,14 @@ func parseMarkdown(f File) (Document, []diag.Diagnostic) {
 		ds = append(ds, diag.Diagnostic{Rule: "SDV050", Severity: diag.SeverityError, Message: walkErr.Error(), Location: diag.Location{File: f.Rel}, Waivable: false})
 	}
 	return doc, ds
+}
+
+// IndexMarkdown derives the URL-validation index from exact Markdown content.
+// Contract blocks are returned too, but state-backed callers may ignore them
+// because contracts are separate entities.
+func IndexMarkdown(path string, data []byte) Document {
+	document, _ := parseMarkdown(File{Rel: path, Data: data})
+	return document
 }
 
 func firstNodeOffset(node mdast.Node) int {

@@ -3,8 +3,8 @@ package checker
 import (
 	"testing"
 
-	"github.com/promisegrid/specdot/internal/config"
-	"github.com/promisegrid/specdot/internal/model"
+	"github.com/promisegrid/gridspec/internal/config"
+	"github.com/promisegrid/gridspec/internal/model"
 )
 
 func TestShortestCounterexample(t *testing.T) {

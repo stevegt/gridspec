@@ -1,12 +1,12 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://promisegrid.github.io/specdot/schema/contract.schema.json",
-  "title": "specdot Markdown contract v1",
+  "$id": "https://promisegrid.github.io/gridspec/schema/contract.schema.json",
+  "title": "GridSpec contract entity v1",
   "type": "object",
   "additionalProperties": false,
   "required": ["schema", "for"],
   "properties": {
-    "schema": {"const": "specdot.contract/v1"},
+    "schema": {"const": "gridspec.contract/v1"},
     "for": {"$ref": "#/$defs/id"},
     "kind": {"type": "string"},
     "status": {"enum": ["active", "draft", "historical", "superseded"]},

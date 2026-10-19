@@ -1,7 +1,9 @@
+# Legacy migration fixture. Accepted GridSpec transactional state is authoritative.
 schema: specdot/v1
-module: github.com/promisegrid/specdot
+module: github.com/promisegrid/gridspec
 roots:
   - specs
+  - docs/architecture.md
 include:
   - "**/*.dot"
   - "**/*.md"

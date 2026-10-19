@@ -3,8 +3,8 @@ package rules
 import (
 	"fmt"
 
-	"github.com/promisegrid/specdot/internal/diag"
-	"github.com/promisegrid/specdot/internal/expr"
+	"github.com/promisegrid/gridspec/internal/diag"
+	"github.com/promisegrid/gridspec/internal/expr"
 )
 
 func checkAgentsAndSignals(ctx Context, idx Index) []diag.Diagnostic {

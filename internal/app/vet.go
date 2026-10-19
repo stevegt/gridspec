@@ -1,4 +1,4 @@
-// Package app orchestrates the public specdot commands.
+// Package app orchestrates GridSpec validation and legacy migration.
 package app
 
 import (
@@ -8,11 +8,11 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/promisegrid/specdot/conformance/trace"
-	"github.com/promisegrid/specdot/internal/config"
-	"github.com/promisegrid/specdot/internal/diag"
-	"github.com/promisegrid/specdot/internal/model"
-	"github.com/promisegrid/specdot/internal/report"
+	"github.com/promisegrid/gridspec/conformance/trace"
+	"github.com/promisegrid/gridspec/internal/config"
+	"github.com/promisegrid/gridspec/internal/diag"
+	"github.com/promisegrid/gridspec/internal/model"
+	"github.com/promisegrid/gridspec/internal/report"
 )
 
 type VetOptions struct {
@@ -151,7 +151,7 @@ func emitIR(target string, ir model.IR, stdout io.Writer) error {
 		if err := os.MkdirAll(filepath.Dir(abs), 0o755); err != nil {
 			return err
 		}
-		tmp, err := os.CreateTemp(filepath.Dir(abs), ".specdot-ir-*")
+		tmp, err := os.CreateTemp(filepath.Dir(abs), ".gridspec-ir-*")
 		if err != nil {
 			return err
 		}

@@ -11,9 +11,9 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/promisegrid/specdot/internal/config"
-	"github.com/promisegrid/specdot/internal/diag"
-	"github.com/promisegrid/specdot/internal/model"
+	"github.com/promisegrid/gridspec/internal/config"
+	"github.com/promisegrid/gridspec/internal/diag"
+	"github.com/promisegrid/gridspec/internal/model"
 )
 
 type File struct {
@@ -27,6 +27,7 @@ type File struct {
 type Document struct {
 	Path      string
 	Abs       string
+	Content   string
 	Anchors   map[string]int
 	Links     []Link
 	Contracts []model.Contract

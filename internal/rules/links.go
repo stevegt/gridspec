@@ -9,9 +9,9 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/promisegrid/specdot/internal/diag"
-	"github.com/promisegrid/specdot/internal/model"
-	"github.com/promisegrid/specdot/internal/source"
+	"github.com/promisegrid/gridspec/internal/diag"
+	"github.com/promisegrid/gridspec/internal/model"
+	"github.com/promisegrid/gridspec/internal/source"
 )
 
 func checkLinks(ctx Context, idx Index) []diag.Diagnostic {
@@ -46,7 +46,7 @@ func checkLinks(ctx Context, idx Index) []diag.Diagnostic {
 					if ctx.Profile.BuildReady {
 						severity = diag.SeverityError
 					}
-					ds = append(ds, diagnostic("SDV142", severity, element.Location, "remote Markdown accessibility was not checked", "run specdot vet --online", element.ID, true))
+					ds = append(ds, diagnostic("SDV142", severity, element.Location, "remote Markdown accessibility was not checked", "run gridspec vet --online", element.ID, true))
 					continue
 				}
 				if err := probeURL(ctx, element.URL); err != nil {

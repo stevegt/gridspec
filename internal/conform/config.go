@@ -1,6 +1,6 @@
 // Package conform compares a vetted specification IR with an existing Go
 // implementation. The implementation sidecar is deliberately separate from
-// language-neutral DOT and Markdown sources.
+// the language-neutral transactional state.
 package conform
 
 import (
@@ -16,10 +16,10 @@ import (
 )
 
 const (
-	ImplementationSchema = "specdot.implementation/v1"
-	ReportSchema         = "specdot.conformance/v1"
-	BaselineSchema       = "specdot.conformance-baseline/v1"
-	DefaultFilename      = "specdot.impl.yaml"
+	ImplementationSchema = "gridspec.implementation/v1"
+	ReportSchema         = "gridspec.conformance/v1"
+	BaselineSchema       = "gridspec.conformance-baseline/v1"
+	DefaultFilename      = "gridspec.impl.yaml"
 )
 
 type Config struct {

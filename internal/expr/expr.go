@@ -1,4 +1,4 @@
-// Package expr validates and evaluates specdot's restricted CEL subset.
+// Package expr validates and evaluates GridSpec's restricted CEL subset.
 package expr
 
 import (
@@ -8,7 +8,7 @@ import (
 	"strings"
 
 	"cel.dev/cel-go/cel"
-	"github.com/promisegrid/specdot/internal/model"
+	"github.com/promisegrid/gridspec/internal/model"
 )
 
 var identifier = regexp.MustCompile(`^[A-Za-z_][A-Za-z0-9_]*$`)

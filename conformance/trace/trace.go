@@ -1,5 +1,5 @@
 // Package trace emits deterministic semantic execution evidence for
-// specdot conform. Implementations may use this package or emit the documented
+// gridspec conform. Implementations may use this package or emit the documented
 // NDJSON protocol themselves.
 package trace
 
@@ -13,9 +13,9 @@ import (
 )
 
 const (
-	Schema      = "specdot.trace/v1"
-	FileEnv     = "SPECDOT_TRACE_FILE"
-	ScenarioEnv = "SPECDOT_TRACE_SCENARIO"
+	Schema      = "gridspec.trace/v1"
+	FileEnv     = "GRIDSPEC_TRACE_FILE"
+	ScenarioEnv = "GRIDSPEC_TRACE_SCENARIO"
 )
 
 type Event struct {

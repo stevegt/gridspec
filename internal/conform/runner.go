@@ -16,9 +16,9 @@ import (
 	"sort"
 	"strings"
 
-	semantictrace "github.com/promisegrid/specdot/conformance/trace"
-	"github.com/promisegrid/specdot/internal/diag"
-	"github.com/promisegrid/specdot/internal/model"
+	semantictrace "github.com/promisegrid/gridspec/conformance/trace"
+	"github.com/promisegrid/gridspec/internal/diag"
+	"github.com/promisegrid/gridspec/internal/model"
 )
 
 type scenarioEvidence struct {
@@ -31,7 +31,7 @@ func runScenarios(cfg Config, ir model.IR, locations map[string]model.Location) 
 	if len(cfg.Scenarios) == 0 {
 		return nil, nil
 	}
-	tempRoot, err := os.MkdirTemp("", "specdot-conform-*")
+	tempRoot, err := os.MkdirTemp("", "gridspec-conform-*")
 	if err != nil {
 		return nil, []diag.Diagnostic{conformDiagnostic("SDC200", model.Location{File: cfg.Path}, "create conformance workspace: "+err.Error(), "", "make the system temporary directory writable")}
 	}
@@ -326,7 +326,7 @@ func checkTrace(ir model.IR, scenario Scenario, path string, loc model.Location)
 	for scanner.Scan() {
 		var event semantictrace.Event
 		if err := json.Unmarshal(scanner.Bytes(), &event); err != nil {
-			return nil, []diag.Diagnostic{conformDiagnostic("SDC301", loc, fmt.Sprintf("scenario %s trace is invalid NDJSON: %v", scenario.SpecID, err), scenario.SpecID, "emit one specdot.trace/v1 event per line")}
+			return nil, []diag.Diagnostic{conformDiagnostic("SDC301", loc, fmt.Sprintf("scenario %s trace is invalid NDJSON: %v", scenario.SpecID, err), scenario.SpecID, "emit one gridspec.trace/v1 event per line")}
 		}
 		events = append(events, event)
 	}
@@ -336,7 +336,7 @@ func checkTrace(ir model.IR, scenario Scenario, path string, loc model.Location)
 	ids := make(map[string]bool)
 	for i, event := range events {
 		if event.Schema != semantictrace.Schema || event.ScenarioID != scenario.SpecID || event.Sequence != i+1 {
-			return nil, []diag.Diagnostic{conformDiagnostic("SDC301", loc, fmt.Sprintf("scenario %s trace event %d has invalid schema, scenario, or sequence", scenario.SpecID, i+1), scenario.SpecID, "emit deterministic specdot.trace/v1 events numbered from one")}
+			return nil, []diag.Diagnostic{conformDiagnostic("SDC301", loc, fmt.Sprintf("scenario %s trace event %d has invalid schema, scenario, or sequence", scenario.SpecID, i+1), scenario.SpecID, "emit deterministic gridspec.trace/v1 events numbered from one")}
 		}
 		if !hasSpecID(ir, event.SpecID) {
 			return nil, []diag.Diagnostic{conformDiagnostic("SDC302", loc, fmt.Sprintf("scenario %s trace references unknown spec ID %s", scenario.SpecID, event.SpecID), scenario.SpecID, "emit only semantic IDs in the vetted IR")}

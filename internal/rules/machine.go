@@ -7,9 +7,9 @@ import (
 	"strings"
 	"time"
 
-	"github.com/promisegrid/specdot/internal/diag"
-	"github.com/promisegrid/specdot/internal/expr"
-	"github.com/promisegrid/specdot/internal/model"
+	"github.com/promisegrid/gridspec/internal/diag"
+	"github.com/promisegrid/gridspec/internal/expr"
+	"github.com/promisegrid/gridspec/internal/model"
 )
 
 func checkMachines(ctx Context, idx Index) []diag.Diagnostic {

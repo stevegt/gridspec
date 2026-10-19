@@ -1,12 +1,12 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://promisegrid.github.io/specdot/schema/conformance.schema.json",
-  "title": "specdot conformance report v1",
+  "$id": "https://promisegrid.github.io/gridspec/schema/conformance.schema.json",
+  "title": "GridSpec conformance report v1",
   "type": "object",
   "additionalProperties": false,
   "required": ["schema", "module", "implementation", "spec_digest", "evidence", "coverage", "diagnostics"],
   "properties": {
-    "schema": {"const": "specdot.conformance/v1"},
+    "schema": {"const": "gridspec.conformance/v1"},
     "module": {"type": "string"}, "implementation": {"type": "string"}, "spec_digest": {"type": "string"},
     "evidence": {"$ref": "#/$defs/evidence"},
     "coverage": {

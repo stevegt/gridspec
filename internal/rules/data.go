@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/promisegrid/specdot/internal/diag"
-	"github.com/promisegrid/specdot/internal/model"
+	"github.com/promisegrid/gridspec/internal/diag"
+	"github.com/promisegrid/gridspec/internal/model"
 )
 
 func checkData(ctx Context, idx Index) []diag.Diagnostic {

@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/promisegrid/specdot/internal/diag"
-	"github.com/promisegrid/specdot/internal/model"
+	"github.com/promisegrid/gridspec/internal/diag"
+	"github.com/promisegrid/gridspec/internal/model"
 	"gonum.org/v1/gonum/graph/formats/dot"
 	dotast "gonum.org/v1/gonum/graph/formats/dot/ast"
 )

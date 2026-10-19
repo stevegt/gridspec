@@ -1,19 +1,19 @@
 .PHONY: all build test vet conform clean
 
-all: test build conform
+all: test build
 
 build:
-	go build -o specdot ./cmd/specdot
+	go build -o gridspec ./cmd/gridspec
 
 test:
 	go test ./...
 
 vet:
 	go vet ./...
-	go run ./cmd/specdot vet --profile build
+	go run ./cmd/gridspec vet --profile build
 
 conform:
-	go run ./cmd/specdot conform
+	go run ./cmd/gridspec conform
 
 clean:
-	$(RM) specdot
+	$(RM) gridspec

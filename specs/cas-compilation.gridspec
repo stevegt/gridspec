@@ -1,0 +1,67 @@
+gridspec 1
+assert exists graph graph.gridspec.authority
+assert exists edge gridspec.flow.replay.vet
+assert exists node gridspec.signed.commit
+delete edge gridspec.flow.replay.vet
+put node gridspec.materialized.state {
+  graph_id = "graph.gridspec.authority",
+  kind = "process",
+  status = "active",
+  attrs = {},
+  location = { file = "views/gridspec-authority.dot", line = 5, column = 1 }
+}
+put node gridspec.signed.commit {
+  graph_id = "graph.gridspec.authority",
+  kind = "process",
+  status = "active",
+  attrs = {},
+  location = { file = "views/gridspec-authority.dot", line = 9, column = 1 }
+}
+put node gridspec.derived.outputs {
+  graph_id = "graph.gridspec.authority",
+  kind = "final",
+  status = "active",
+  attrs = { specdot_final = "true" },
+  location = { file = "views/gridspec-authority.dot", line = 11, column = 1 }
+}
+put edge gridspec.flow.replay.materialize {
+  graph_id = "graph.gridspec.authority", kind = "flow", status = "active",
+  from = "gridspec.replay", to = "gridspec.materialized.state", attrs = {},
+  location = { file = "views/gridspec-authority.dot", line = 14, column = 1 }
+}
+put edge gridspec.flow.materialize.vet {
+  graph_id = "graph.gridspec.authority", kind = "flow", status = "active",
+  from = "gridspec.materialized.state", to = "gridspec.vet", attrs = {},
+  location = { file = "views/gridspec-authority.dot", line = 15, column = 1 }
+}
+put edge gridspec.flow.proposal.preview {
+  graph_id = "graph.gridspec.authority", kind = "flow", status = "active",
+  from = "gridspec.proposal", to = "gridspec.derived.outputs",
+  attrs = { specdot_branch = "vetted-preview" },
+  location = { file = "views/gridspec-authority.dot", line = 20, column = 1 }
+}
+put edge gridspec.flow.accepted.outputs {
+  graph_id = "graph.gridspec.authority", kind = "flow", status = "active",
+  from = "gridspec.signed.commit", to = "gridspec.derived.outputs",
+  attrs = { specdot_branch = "accepted-default" },
+  location = { file = "views/gridspec-authority.dot", line = 24, column = 1 }
+}
+put contract graph.gridspec.authority {
+  schema = "gridspec.contract/v1",
+  kind = "algorithm",
+  status = "active",
+  summary = "Transactions are replayed into mandatory CAS state CIDs; views, checks, and generators consume those CIDs, while only a signed complete Grid Commit v3 selection changes accepted state.",
+  metadata = {
+    authority = "signed Grid Commit v3 over complete timeline heads",
+    source_language = "GridSpec transaction language v1 over Grid-CBOR state",
+    materialization = "deterministic replay must produce and verify a complete CAS state CID before any downstream consumer runs",
+    generation_input = "accepted state CID by default or an explicitly selected current vetted proposal state CID",
+    compiler = "CAS reload and LLM-assisted translation followed by deterministic validation and tests",
+    disassembler = "accepted state CID plus existing code yields a reviewable transaction proposal",
+    equivalence = "bounded conformance evidence, never a general proof of program equivalence",
+    carrier = "Git objects and refs carry CID-addressed Grid closures but do not define semantic identity",
+    docker_analogy = "transaction programs resemble Dockerfiles, state CIDs resemble image digests, and Git-backed CAS resembles the local content store or registry",
+    llm_trust = "LLMs propose transformations and never receive signing keys or acceptance authority"
+  },
+  location = { file = "docs/architecture.md", line = 1, column = 1 }
+}

@@ -1,14 +1,14 @@
 package app
 
 import (
-	"github.com/promisegrid/specdot/conformance/trace"
-	"github.com/promisegrid/specdot/internal/checker"
-	"github.com/promisegrid/specdot/internal/compile"
-	"github.com/promisegrid/specdot/internal/config"
-	"github.com/promisegrid/specdot/internal/diag"
-	"github.com/promisegrid/specdot/internal/model"
-	"github.com/promisegrid/specdot/internal/rules"
-	"github.com/promisegrid/specdot/internal/source"
+	"github.com/promisegrid/gridspec/conformance/trace"
+	"github.com/promisegrid/gridspec/internal/checker"
+	"github.com/promisegrid/gridspec/internal/compile"
+	"github.com/promisegrid/gridspec/internal/config"
+	"github.com/promisegrid/gridspec/internal/diag"
+	"github.com/promisegrid/gridspec/internal/model"
+	"github.com/promisegrid/gridspec/internal/rules"
+	"github.com/promisegrid/gridspec/internal/source"
 )
 
 func analyzeModule(cfg config.Config, profileName string, profile config.Profile, paths []string, online bool, sink trace.Sink) (model.IR, []diag.Diagnostic, error) {
