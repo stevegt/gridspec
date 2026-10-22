@@ -9,6 +9,7 @@ import (
 	"sort"
 
 	"github.com/promisegrid/gridspec/internal/diag"
+	"github.com/promisegrid/gridspec/internal/goworkflow"
 	"github.com/promisegrid/gridspec/internal/model"
 )
 
@@ -17,14 +18,15 @@ type RunOptions struct {
 }
 
 type Report struct {
-	Schema         string                    `json:"schema"`
-	Module         string                    `json:"module"`
-	Implementation string                    `json:"implementation"`
-	SpecDigest     string                    `json:"spec_digest"`
-	Evidence       map[string][]string       `json:"evidence"`
-	Coverage       map[string]CoverageResult `json:"coverage"`
-	Exclusions     []ExcludedID              `json:"exclusions,omitempty"`
-	Diagnostics    []diag.Diagnostic         `json:"diagnostics"`
+	Schema         string                           `json:"schema"`
+	Module         string                           `json:"module"`
+	Implementation string                           `json:"implementation"`
+	SpecDigest     string                           `json:"spec_digest"`
+	Evidence       map[string][]string              `json:"evidence"`
+	Coverage       map[string]CoverageResult        `json:"coverage"`
+	Exclusions     []ExcludedID                     `json:"exclusions,omitempty"`
+	AcceptedRuns   []goworkflow.ScenarioObservation `json:"accepted_scenario_runs,omitempty"`
+	Diagnostics    []diag.Diagnostic                `json:"diagnostics"`
 }
 
 type CoverageResult struct {
@@ -54,6 +56,7 @@ func Run(cfg Config, ir model.IR, opts RunOptions) Report {
 		"static": {}, "command": {}, "go_test": {}, "trace": {},
 	}
 	var diagnostics []diag.Diagnostic
+	var acceptedRuns []goworkflow.ScenarioObservation
 	diagnostics = append(diagnostics, validateReferences(cfg, ir, locations, kinds)...)
 	if !diag.HasErrors(diagnostics) {
 		static, ds := resolveBindings(cfg, ir, locations)
@@ -64,7 +67,8 @@ func Run(cfg Config, ir model.IR, opts RunOptions) Report {
 		}
 		diagnostics = append(diagnostics, ds...)
 		if !diag.HasErrors(diagnostics) {
-			runs, runDS := runScenarios(cfg, ir, locations)
+			runs, observations, runDS := runScenarios(cfg, ir, locations)
+			acceptedRuns = observations
 			diagnostics = append(diagnostics, runDS...)
 			for _, run := range runs {
 				for id := range run.SpecIDs {
@@ -137,12 +141,19 @@ func Run(cfg Config, ir model.IR, opts RunOptions) Report {
 	}
 	return Report{
 		Schema: ReportSchema, Module: ir.Module, Implementation: cfg.Name, SpecDigest: ir.Digest,
-		Evidence: evidence, Coverage: coverage, Exclusions: excluded, Diagnostics: diagnostics,
+		Evidence: evidence, Coverage: coverage, Exclusions: excluded,
+		AcceptedRuns: acceptedRuns, Diagnostics: diagnostics,
 	}
 }
 
 func validateReferences(cfg Config, ir model.IR, locations map[string]model.Location, kinds map[string]string) []diag.Diagnostic {
 	var ds []diag.Diagnostic
+	acceptedCommands := make(map[string]bool)
+	for _, contract := range ir.Contracts {
+		if (contract.Status == "" || contract.Status == "active") && contract.Scenario != nil {
+			acceptedCommands[contract.For] = true
+		}
+	}
 	check := func(id, use string) {
 		if !hasSpecID(ir, id) {
 			ds = append(ds, conformDiagnostic("SDC001", model.Location{File: cfg.Path}, fmt.Sprintf("%s references unknown spec ID %s", use, id), id, "use an active semantic ID from the vetted IR or remove the stale entry"))
@@ -153,6 +164,9 @@ func validateReferences(cfg Config, ir model.IR, locations map[string]model.Loca
 	}
 	for _, scenario := range cfg.Scenarios {
 		check(scenario.SpecID, "scenario")
+		if scenario.Command != nil && acceptedCommands[scenario.SpecID] {
+			ds = append(ds, conformDiagnostic("SDC003", locationFor(locations, scenario.SpecID, cfg.Path), fmt.Sprintf("sidecar command scenario %s duplicates an accepted command contract", scenario.SpecID), scenario.SpecID, "remove command arguments and expectations from the sidecar; accepted specification state is the behavioral authority"))
+		}
 		if kind := kinds[scenario.SpecID]; kind != "" && kind != "scenario" {
 			ds = append(ds, conformDiagnostic("SDC002", locationFor(locations, scenario.SpecID, cfg.Path), fmt.Sprintf("scenario binding %s targets kind %s, not scenario", scenario.SpecID, kind), scenario.SpecID, "bind runners to a scenario graph"))
 		}

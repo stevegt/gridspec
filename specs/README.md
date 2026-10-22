@@ -17,6 +17,9 @@ gridspec view --format text --output specs/gridspec.txn
 code qualification workflow and the first accepted compiler-owned command
 oracle; [`qualification-failures.gridspec`](qualification-failures.gridspec)
 adds the explicit Go-test and command-oracle rejection paths.
+[`shared-conformance.gridspec`](shared-conformance.gridspec) makes those same
+accepted command contracts authoritative when checking existing Go and limits
+the sidecar to implementation mapping and supplemental evidence.
 [`gridspec-qualification.dot`](../views/gridspec-qualification.dot) is
 its generated detailed view. Richer persistence, failure, upper-bound, dry-run,
 and update behavior is exercised by the persistent-counter closed-loop

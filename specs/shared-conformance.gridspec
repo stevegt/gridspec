@@ -1,0 +1,56 @@
+gridspec 1
+assert exists contract graph.gridspec.qualification
+assert exists contract graph.specdot.conform
+assert exists node conform.load.sidecar
+assert exists node conform.run.scenarios
+
+put contract graph.gridspec.qualification {
+  schema = "gridspec.contract/v1", for = "graph.gridspec.qualification",
+  kind = "algorithm", status = "active",
+  summary = "Accepted command contracts, not generated tests, decide whether compiler output qualifies.",
+  metadata = {
+    authority = "accepted scenario contracts",
+    missing_oracle = "publish an audited unsigned scenario proposal and emit no code",
+    evidence = "gridspec.qualification/v1 stored through the derived-artifact CAS envelope",
+    update = "qualify a reconstructed temporary module before applying hash-rechecked owned files",
+    shared_runner = "generated and existing Go execute through one bounded accepted-scenario runner",
+    conformance = "existing Go is checked against accepted commands without regeneration",
+    mapping = "generated output or an implementation sidecar maps artifact names to Go packages"
+  },
+  location = { file = "docs/architecture.md", line = 84, column = 1 }
+}
+
+put contract graph.specdot.conform {
+  schema = "specdot.contract/v1", for = "graph.specdot.conform",
+  kind = "algorithm", status = "active",
+  summary = "Deterministically compare a vetted specification with existing Go code.",
+  metadata = {
+    implementation_schema = "gridspec.implementation/v1",
+    report_schema = "gridspec.conformance/v1",
+    trace_schema = "gridspec.trace/v1",
+    baseline_schema = "gridspec.conformance-baseline/v1",
+    command_authority = "accepted executable scenario contracts",
+    shared_runner = "generated and existing Go use the same accepted-scenario runner",
+    sidecar_role = "artifact and symbol mappings plus supplemental test and trace evidence",
+    duplicate_oracle = "a sidecar command for an accepted executable scenario is rejected"
+  },
+  location = { file = "specs/conform.md", line = 28, column = 1 }
+}
+
+put node conform.load.sidecar {
+  attrs = { specdot_id = "conform.load.sidecar", specdot_kind = "decision" },
+  dot_id = "sidecar", element = "node", graph_id = "graph.specdot.conform",
+  id = "conform.load.sidecar", kind = "decision", status = "active",
+  title = "Load implementation sidecar",
+  summary = "Maps artifact names and symbols and supplies supplemental test, trace, and coverage configuration.",
+  location = { file = "specs/conform.dot", line = 5, column = 24 }
+}
+
+put node conform.run.scenarios {
+  attrs = { specdot_id = "conform.run.scenarios", specdot_kind = "decision" },
+  dot_id = "scenarios", element = "node", graph_id = "graph.specdot.conform",
+  id = "conform.run.scenarios", kind = "decision", status = "active",
+  title = "Run accepted scenarios",
+  summary = "Runs accepted command contracts through the shared qualifier, then legacy Go-test and trace mappings.",
+  location = { file = "specs/conform.dot", line = 9, column = 26 }
+}

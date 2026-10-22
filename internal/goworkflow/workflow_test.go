@@ -253,6 +253,19 @@ func TestGeneratedArtifactsMustUseLocalPackages(t *testing.T) {
 	}
 }
 
+func TestAcceptedScenarioRunnerRejectsUnsafeArtifactMappings(t *testing.T) {
+	cases := [][]GeneratedArtifact{
+		{{Name: "../tool", Package: "."}},
+		{{Name: "tool", Package: "-flag"}},
+		{{Name: "tool", Package: "."}, {Name: "TOOL", Package: "./cmd/tool"}},
+	}
+	for _, artifacts := range cases {
+		if err := validateArtifactCoverage(nil, artifacts); err == nil {
+			t.Fatalf("accepted unsafe artifact mappings %#v", artifacts)
+		}
+	}
+}
+
 func testSource(state specstate.State) specsource.Identity {
 	return specsource.Identity{
 		Kind: specsource.Accepted, AcceptedCommit: state.CID,

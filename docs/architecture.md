@@ -81,16 +81,16 @@ shell checks syntax, paths, ownership, content hashes, state replay, semantic
 rules, bounded models, and executable tests. A human or separately authorized
 agent accepts the resulting transaction or code change.
 
-## Mandatory build qualification
+## Shared executable qualification
 
 Accepted specifications contain language-neutral `contract.scenario` command
-oracles. Each names a generated artifact, covered semantic IDs, inline fixture
-files, a repeat count, and ordered process steps with exact exit, stream, and
-file expectations. The generated-file response separately maps artifact names
-to Go main packages. The model may write its own Go tests, but those tests are
-supplemental: accepted scenarios are the independent publication gate.
-Artifact mappings may name only `.` or a `./`-relative package inside the
-staged generated module.
+oracles. Each names an artifact, covered semantic IDs, inline fixture files, a
+repeat count, and ordered process steps with exact exit, stream, and file
+expectations. Generated-file responses and implementation sidecars separately
+map those artifact names to Go main packages. A package mapping selects code;
+it cannot redefine accepted behavior. Model-authored Go tests and sidecar-bound
+Go tests remain supplemental evidence. Generated artifact mappings may name
+only `.` or a `./`-relative package inside the staged module.
 
 `build` writes a temporary module, runs its Go tests, builds the mapped
 artifacts, and executes every accepted scenario. Each repeat receives a fresh
@@ -106,12 +106,27 @@ qualifies that result without touching the source tree. Write mode rechecks the
 source hashes after qualification and applies only the already-tested bytes,
 with rollback protection for write failures.
 
+`conform` applies the same accepted-scenario runner to hand-written Go without
+regenerating or rewriting it. It builds each mapped artifact with workspace
+mode disabled and module files read-only, then uses the same fresh fixtures,
+ordered processes, limits, normalization, and exact comparisons as `build` and
+`update`. The sidecar remains authoritative for artifact and symbol mappings,
+coverage policy, and legacy Go-test or trace bindings. Its older command form
+is accepted only for scenario IDs without an executable accepted contract; a
+duplicate sidecar command oracle is an error.
+
 The deterministic `gridspec.qualification/v1` report binds source identity,
 output digest, artifact mappings, Go-test observations, normalized scenario
 observations, and expected-file hashes. It is stored as the verification bytes
 already linked by the derived-artifact v1 CAS message. The ownership manifest
 v3 records the corresponding evidence digest and scenario IDs; v1 and v2
 manifests remain readable.
+
+Existing-code conformance stores the same normalized scenario observations in
+its `gridspec.conformance/v1` report, then combines their covered IDs with
+static, Go-test, trace, exclusion, floor, and baseline evidence. Ordinary
+conformance is read-only unless the operator explicitly records the report as
+an unsigned candidate.
 
 When no executable scenario is accepted, compilation does not degrade to a
 warning or unsafe mode. `gridspec scenarios` asks an LLM for bounded strict JSON,
@@ -180,8 +195,8 @@ smaller claims with explicit boundaries:
 - Grid-CBOR encoding, CIDs, reference sets, signatures, and replay are exact;
 - finite-state checks are conclusive only within their declared bounds and
   report `inconclusive` when limits prevent a proof;
-- conformance combines static bindings, command fixtures, Go tests, semantic
-  traces, coverage floors, exclusions, and reviewed baselines;
+- conformance combines static bindings, accepted command contracts, Go tests,
+  semantic traces, coverage floors, exclusions, and reviewed baselines;
 - generated Go is accepted only after deterministic validation and tests, which
   demonstrate selected behavior rather than proving all behavior;
 - disassembly produces a hypothesis/proposal whose omissions and uncertainty

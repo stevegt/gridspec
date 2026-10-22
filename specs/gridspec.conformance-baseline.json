@@ -2,9 +2,10 @@
   "schema": "gridspec.conformance-baseline/v1",
   "module": "github.com/promisegrid/gridspec",
   "implementation": "gridspec-go",
-  "spec_digest": "sha256:4f9c77e9ad46430e470f7fca1db5357e055dd4fa7da05fa59219e0e690a748a6",
+  "spec_digest": "sha256:b8c929d36ea2e20d432ea33fcfab53768a782ecce8cf955654fa14045d5299b9",
   "evidence": {
     "command": [
+      "gridspec.qualification.command",
       "gridspec.qualification.smoke.done",
       "gridspec.qualification.smoke.flow",
       "gridspec.qualification.smoke.start",

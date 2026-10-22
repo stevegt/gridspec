@@ -68,33 +68,37 @@ type FileObservation struct {
 	SHA256 string `json:"sha256,omitempty"`
 }
 
+// ScenarioResult records one accepted command scenario without weakening the
+// other results when another independent scenario fails.
+type ScenarioResult struct {
+	ID          string
+	Covers      []string
+	Observation ScenarioObservation
+	Err         error
+}
+
 func qualify(ctx context.Context, root string, state specstate.State, source specsource.Identity, generated *GeneratedSet) error {
 	definitions, err := scenarios.Definitions(state)
 	if err != nil {
-		return err
-	}
-	if err := validateArtifactCoverage(definitions, generated.Artifacts); err != nil {
 		return err
 	}
 	goTest, err := runGoTests(ctx, root)
 	if err != nil {
 		return err
 	}
-	binaries, cleanup, err := buildArtifacts(ctx, root, definitions, generated.Artifacts)
+	results, err := RunAcceptedScenarios(ctx, root, definitions, generated.Artifacts)
 	if err != nil {
 		return err
 	}
-	defer cleanup()
 	report := QualificationReport{
 		Schema: qualificationSchema, Source: manifestSource(source),
 		Artifacts: append([]GeneratedArtifact(nil), generated.Artifacts...), GoTest: goTest,
 	}
-	for _, definition := range definitions {
-		observation, err := runScenario(ctx, root, definition, binaries[definition.Contract.Artifact])
-		if err != nil {
-			return fmt.Errorf("qualification scenario %s: %w", definition.ID, err)
+	for _, result := range results {
+		if result.Err != nil {
+			return fmt.Errorf("qualification scenario %s: %w", result.ID, result.Err)
 		}
-		report.Scenarios = append(report.Scenarios, observation)
+		report.Scenarios = append(report.Scenarios, result.Observation)
 	}
 	generated.Qualification = report
 	digest, err := Digest(*generated)
@@ -105,23 +109,67 @@ func qualify(ctx context.Context, root string, state specstate.State, source spe
 	return nil
 }
 
+// RunAcceptedScenarios executes the language-neutral command oracle against an
+// existing Go module. Generated builds and existing-code conformance call this
+// same function, so artifact mappings cannot redefine behavior.
+func RunAcceptedScenarios(ctx context.Context, root string, definitions []scenarios.Definition, artifacts []GeneratedArtifact) ([]ScenarioResult, error) {
+	if err := validateArtifactCoverage(definitions, artifacts); err != nil {
+		return nil, err
+	}
+	binaries, cleanup, err := buildArtifacts(ctx, root, definitions, artifacts)
+	if err != nil {
+		return nil, err
+	}
+	defer cleanup()
+	results := make([]ScenarioResult, 0, len(definitions))
+	for _, definition := range definitions {
+		observation, runErr := runScenario(ctx, root, definition, binaries[definition.Contract.Artifact])
+		results = append(results, ScenarioResult{
+			ID: definition.ID, Covers: append([]string(nil), definition.Contract.Covers...),
+			Observation: observation, Err: runErr,
+		})
+	}
+	return results, nil
+}
+
 func validateArtifactCoverage(definitions []scenarios.Definition, artifacts []GeneratedArtifact) error {
 	byName := make(map[string]GeneratedArtifact, len(artifacts))
+	seen := make(map[string]bool, len(artifacts))
 	for _, artifact := range artifacts {
+		foldedName := strings.ToLower(artifact.Name)
+		if !validArtifactName(artifact.Name) || strings.TrimSpace(artifact.Package) != artifact.Package || strings.HasPrefix(artifact.Package, "-") {
+			return fmt.Errorf("invalid artifact mapping %q to package %q", artifact.Name, artifact.Package)
+		}
+		if seen[foldedName] {
+			return fmt.Errorf("artifact name %q is duplicated", artifact.Name)
+		}
+		seen[foldedName] = true
 		byName[artifact.Name] = artifact
 	}
 	for _, definition := range definitions {
 		if _, ok := byName[definition.Contract.Artifact]; !ok {
-			return fmt.Errorf("scenario %s references artifact %q, but generated output did not map it to a Go package", definition.ID, definition.Contract.Artifact)
+			return fmt.Errorf("scenario %s references artifact %q, but the implementation did not map it to a Go package", definition.ID, definition.Contract.Artifact)
 		}
 	}
 	return nil
 }
 
+func validArtifactName(name string) bool {
+	if name == "" {
+		return false
+	}
+	for _, r := range name {
+		if !(r >= 'a' && r <= 'z' || r >= 'A' && r <= 'Z' || r >= '0' && r <= '9' || r == '-' || r == '_') {
+			return false
+		}
+	}
+	return true
+}
+
 func runGoTests(ctx context.Context, root string) (ProcessObservation, error) {
 	testContext, cancel := context.WithTimeout(ctx, goToolTimeout)
 	defer cancel()
-	command := exec.CommandContext(testContext, "go", "test", "-buildvcs=false", "./...")
+	command := exec.CommandContext(testContext, "go", "test", "-buildvcs=false", "-mod=readonly", "./...")
 	command.Dir = root
 	command.Env = withEnvironment("GOWORK", "off")
 	stdout, stderr := &limitedBuffer{limit: scenarios.MaxStreamBytes}, &limitedBuffer{limit: scenarios.MaxStreamBytes}
@@ -159,7 +207,7 @@ func buildArtifacts(ctx context.Context, root string, definitions []scenarios.De
 		}
 		binary := filepath.Join(temp, artifact.Name)
 		buildContext, cancel := context.WithTimeout(ctx, goToolTimeout)
-		command := exec.CommandContext(buildContext, "go", "build", "-buildvcs=false", "-o", binary, artifact.Package)
+		command := exec.CommandContext(buildContext, "go", "build", "-buildvcs=false", "-mod=readonly", "-o", binary, artifact.Package)
 		command.Dir = root
 		command.Env = withEnvironment("GOWORK", "off")
 		output := &limitedBuffer{limit: scenarios.MaxStreamBytes}
@@ -169,11 +217,11 @@ func buildArtifacts(ctx context.Context, root string, definitions []scenarios.De
 		cancel()
 		if timedOut {
 			cleanup()
-			return nil, func() {}, fmt.Errorf("build generated artifact %q exceeded %s", artifact.Name, goToolTimeout)
+			return nil, func() {}, fmt.Errorf("build artifact %q exceeded %s", artifact.Name, goToolTimeout)
 		}
 		if err != nil {
 			cleanup()
-			return nil, func() {}, fmt.Errorf("build generated artifact %q: %s: %w", artifact.Name, strings.TrimSpace(string(output.Bytes())), err)
+			return nil, func() {}, fmt.Errorf("build artifact %q: %s: %w", artifact.Name, strings.TrimSpace(string(output.Bytes())), err)
 		}
 		if output.exceeded {
 			cleanup()

@@ -116,7 +116,7 @@ bindings:
   - {spec_id: gridspec.qualification.stop, package: github.com/promisegrid/gridspec/internal/scenarios, kind: func, name: Generate}
   - {spec_id: gridspec.qualification.generate, package: github.com/promisegrid/gridspec/internal/goworkflow, kind: func, name: Build}
   - {spec_id: gridspec.qualification.gotest, package: github.com/promisegrid/gridspec/internal/goworkflow, kind: func, name: runGoTests}
-  - {spec_id: gridspec.qualification.command, package: github.com/promisegrid/gridspec/internal/goworkflow, kind: func, name: qualify}
+  - {spec_id: gridspec.qualification.command, package: github.com/promisegrid/gridspec/internal/goworkflow, kind: func, name: RunAcceptedScenarios}
   - {spec_id: gridspec.qualification.passed, package: github.com/promisegrid/gridspec/internal/goworkflow, kind: func, name: qualify}
   - {spec_id: gridspec.qualification.publish, package: github.com/promisegrid/gridspec/internal/project, kind: method, receiver: Project, name: PublishCandidate}
   - {spec_id: gridspec.qualification.reject, package: github.com/promisegrid/gridspec/internal/goworkflow, kind: func, name: Build}
@@ -244,22 +244,6 @@ scenarios:
       package: ./internal/conform
       test: TestRunRequiresEvidenceOrExplicitExclusion
       timeout: 30s
-
-  - spec_id: scenario.gridspec.qualification.smoke
-    covers:
-      - gridspec.qualification.smoke.start
-      - gridspec.qualification.smoke.done
-      - gridspec.qualification.smoke.flow
-    command:
-      artifact: gridspec
-      args: [version]
-      fixture: testdata/qualification-empty
-      timeout: 5s
-      repeat: 2
-    expect:
-      exit_code: 0
-      stdout: {equals: "gridspec dev\n"}
-      stderr: {empty: true}
 
 exclusions:
   - reason: Authority-flow edges are relationships covered by the bound transaction, replay, vet, proposal, acceptance, and commit objects.

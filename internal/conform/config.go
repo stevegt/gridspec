@@ -65,6 +65,8 @@ type Scenario struct {
 	Trace   TraceExpectation `yaml:"trace,omitempty" json:"trace,omitempty"`
 }
 
+// CommandRunner is the legacy sidecar command format. Accepted executable
+// scenario contracts are authoritative whenever they exist for the same ID.
 type CommandRunner struct {
 	Artifact string            `yaml:"artifact" json:"artifact"`
 	Args     []string          `yaml:"args,omitempty" json:"args,omitempty"`
@@ -198,16 +200,22 @@ func (c Config) validate() error {
 		return errors.New("implementation name is required")
 	}
 	artifacts := make(map[string]bool)
+	foldedArtifacts := make(map[string]bool)
 	for i, artifact := range c.Go.Artifacts {
 		if artifact.Name == "" || artifact.Package == "" {
 			return fmt.Errorf("go.artifacts[%d] requires name and package", i)
 		}
+		if strings.TrimSpace(artifact.Package) != artifact.Package || strings.HasPrefix(artifact.Package, "-") {
+			return fmt.Errorf("go artifact %q has invalid package %q", artifact.Name, artifact.Package)
+		}
 		if safeName(artifact.Name) != artifact.Name {
 			return fmt.Errorf("go artifact name %q may contain only letters, digits, hyphens, and underscores", artifact.Name)
 		}
-		if artifacts[artifact.Name] {
+		foldedName := strings.ToLower(artifact.Name)
+		if foldedArtifacts[foldedName] {
 			return fmt.Errorf("go artifact %q is duplicated", artifact.Name)
 		}
+		foldedArtifacts[foldedName] = true
 		artifacts[artifact.Name] = true
 	}
 	bindings := make(map[string]bool)

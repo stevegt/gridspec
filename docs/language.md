@@ -66,6 +66,13 @@ limited to 1 MiB; timeouts default to 5 seconds and cannot exceed 60 seconds.
 These limits make the observation finite. They do not make arbitrary Go
 equivalence decidable or provide an operating-system sandbox.
 
+The same accepted contract qualifies both compiler output and an existing Go
+implementation. Code generation and an implementation sidecar may map the
+contract's artifact name to different Go packages, but neither may redefine
+the steps or expected observations. Existing-code conformance builds the mapped
+package without rewriting it and records the normalized scenario observations
+in its report.
+
 ## Events and acceptance
 
 An event records previous event, base state, language pCID, exact program CID,

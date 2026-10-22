@@ -18,7 +18,9 @@ import (
 
 	semantictrace "github.com/promisegrid/gridspec/conformance/trace"
 	"github.com/promisegrid/gridspec/internal/diag"
+	"github.com/promisegrid/gridspec/internal/goworkflow"
 	"github.com/promisegrid/gridspec/internal/model"
+	scenarioengine "github.com/promisegrid/gridspec/internal/scenarios"
 )
 
 type scenarioEvidence struct {
@@ -27,21 +29,22 @@ type scenarioEvidence struct {
 	TraceIDs map[string]bool
 }
 
-func runScenarios(cfg Config, ir model.IR, locations map[string]model.Location) ([]scenarioEvidence, []diag.Diagnostic) {
+func runScenarios(cfg Config, ir model.IR, locations map[string]model.Location) ([]scenarioEvidence, []goworkflow.ScenarioObservation, []diag.Diagnostic) {
+	evidence, acceptedRuns, diagnostics := runAcceptedScenarios(cfg, ir, locations)
 	if len(cfg.Scenarios) == 0 {
-		return nil, nil
+		return evidence, acceptedRuns, diagnostics
 	}
 	tempRoot, err := os.MkdirTemp("", "gridspec-conform-*")
 	if err != nil {
-		return nil, []diag.Diagnostic{conformDiagnostic("SDC200", model.Location{File: cfg.Path}, "create conformance workspace: "+err.Error(), "", "make the system temporary directory writable")}
+		diagnostics = append(diagnostics, conformDiagnostic("SDC200", model.Location{File: cfg.Path}, "create conformance workspace: "+err.Error(), "", "make the system temporary directory writable"))
+		return evidence, acceptedRuns, diagnostics
 	}
 	defer os.RemoveAll(tempRoot)
 	artifacts, buildDS := buildArtifacts(cfg, tempRoot)
 	if len(buildDS) != 0 {
-		return nil, buildDS
+		diagnostics = append(diagnostics, buildDS...)
+		return evidence, acceptedRuns, diagnostics
 	}
-	var evidence []scenarioEvidence
-	var diagnostics []diag.Diagnostic
 	for _, scenario := range cfg.Scenarios {
 		loc := locations[scenario.SpecID]
 		if loc.File == "" {
@@ -59,7 +62,45 @@ func runScenarios(cfg Config, ir model.IR, locations map[string]model.Location) 
 			evidence = append(evidence, result)
 		}
 	}
-	return evidence, diagnostics
+	return evidence, acceptedRuns, diagnostics
+}
+
+func runAcceptedScenarios(cfg Config, ir model.IR, locations map[string]model.Location) ([]scenarioEvidence, []goworkflow.ScenarioObservation, []diag.Diagnostic) {
+	definitions, err := scenarioengine.FromIR(ir)
+	if err != nil {
+		return nil, nil, []diag.Diagnostic{conformDiagnostic("SDC206", model.Location{File: cfg.Path}, err.Error(), "", "repair the accepted executable scenario contracts before checking an implementation")}
+	}
+	if len(definitions) == 0 {
+		return nil, nil, nil
+	}
+	if cfg.Go == nil {
+		return nil, nil, []diag.Diagnostic{conformDiagnostic("SDC201", model.Location{File: cfg.Path}, "accepted command scenarios require Go artifact mappings", "", "declare go.artifacts in the implementation sidecar")}
+	}
+	artifacts := make([]goworkflow.GeneratedArtifact, len(cfg.Go.Artifacts))
+	for index, artifact := range cfg.Go.Artifacts {
+		artifacts[index] = goworkflow.GeneratedArtifact{Name: artifact.Name, Package: artifact.Package}
+	}
+	runs, err := goworkflow.RunAcceptedScenarios(context.Background(), cfg.ModuleRoot, definitions, artifacts)
+	if err != nil {
+		return nil, nil, []diag.Diagnostic{conformDiagnostic("SDC201", model.Location{File: cfg.Path}, "prepare accepted command scenarios: "+err.Error(), "", "map every accepted command artifact to a buildable Go main package")}
+	}
+	var evidence []scenarioEvidence
+	var observations []goworkflow.ScenarioObservation
+	var diagnostics []diag.Diagnostic
+	for _, run := range runs {
+		location := locationFor(locations, run.ID, cfg.Path)
+		if run.Err != nil {
+			diagnostics = append(diagnostics, conformDiagnostic("SDC206", location, fmt.Sprintf("accepted scenario %s: %v", run.ID, run.Err), run.ID, "repair the implementation or propose and separately accept a changed behavioral expectation"))
+			continue
+		}
+		ids := map[string]bool{run.ID: true}
+		for _, id := range run.Covers {
+			ids[id] = true
+		}
+		evidence = append(evidence, scenarioEvidence{Class: "command", SpecIDs: ids, TraceIDs: map[string]bool{}})
+		observations = append(observations, run.Observation)
+	}
+	return evidence, observations, diagnostics
 }
 
 func buildArtifacts(cfg Config, tempRoot string) (map[string]string, []diag.Diagnostic) {

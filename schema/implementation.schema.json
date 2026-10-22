@@ -2,6 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://promisegrid.github.io/gridspec/schema/implementation.schema.json",
   "title": "GridSpec implementation sidecar v1",
+  "description": "Maps accepted semantic IDs and artifact names to an existing implementation; accepted scenario contracts, not this sidecar, are the primary command oracle.",
   "type": "object",
   "additionalProperties": false,
   "required": ["schema", "name", "go", "coverage"],
@@ -44,7 +45,7 @@
       "properties": {
         "spec_id": {"$ref": "#/$defs/id"},
         "covers": {"type": "array", "items": {"$ref": "#/$defs/id"}},
-        "command": {"$ref": "#/$defs/command"}, "go_test": {"$ref": "#/$defs/go_test"},
+        "command": {"$ref": "#/$defs/command", "deprecated": true, "description": "Legacy command oracle for scenario IDs that do not yet have an accepted executable scenario contract."}, "go_test": {"$ref": "#/$defs/go_test"},
         "expect": {"$ref": "#/$defs/expect"}, "trace": {"$ref": "#/$defs/trace"}
       },
       "oneOf": [{"required": ["command"], "not": {"required": ["go_test"]}}, {"required": ["go_test"], "not": {"required": ["command"]}}],

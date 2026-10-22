@@ -59,6 +59,21 @@ func Definitions(state specstate.State) ([]Definition, error) {
 	if err != nil {
 		return nil, err
 	}
+	result, err := FromIR(ir)
+	if err != nil {
+		return nil, err
+	}
+	if len(result) == 0 {
+		return nil, &MissingError{}
+	}
+	return result, nil
+}
+
+// FromIR returns every complete active executable command scenario in stable
+// order. Unlike Definitions, an empty result is valid so existing-code
+// conformance can retain legacy test mappings while specifications migrate to
+// accepted command contracts.
+func FromIR(ir model.IR) ([]Definition, error) {
 	problems := Validate(ir)
 	if len(problems) != 0 {
 		messages := make([]string, len(problems))
@@ -81,9 +96,6 @@ func Definitions(state specstate.State) ([]Definition, error) {
 			continue
 		}
 		result = append(result, Definition{ID: graph.ID, Location: contract.Location, Contract: *contract.Scenario})
-	}
-	if len(result) == 0 {
-		return nil, &MissingError{}
 	}
 	sort.Slice(result, func(i, j int) bool { return result[i].ID < result[j].ID })
 	return result, nil

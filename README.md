@@ -168,11 +168,16 @@ trusted local environment; this is resource bounding, not an OS sandbox.
 Artifact mappings are restricted to `.` or `./`-relative packages inside the
 staged generated module.
 
-Conformance of hand-written code is evidence, not regeneration: it resolves Go
-symbols, executes isolated command fixtures and exact Go tests, checks optional
-semantic traces, and enforces coverage floors, reviewed exclusions, and a
-baseline. These are bounded observations, not a proof of arbitrary program
-equivalence.
+Conformance of hand-written code is evidence, not regeneration. It builds the
+sidecar-mapped package and executes accepted `contract.scenario` commands
+through the same runner used to qualify generated code. The sidecar maps
+artifact names and Go symbols; it also retains supplemental Go-test and trace
+mappings while those contracts migrate into accepted state. Its older
+`command` form is deprecated and cannot override an accepted scenario with the
+same ID. Conformance does not write the source module, and its JSON report
+includes normalized accepted-scenario observations alongside static, command,
+Go-test, trace, coverage, exclusion, and baseline evidence. These are bounded
+observations, not a proof of arbitrary program equivalence.
 `--record` explicitly publishes the exact report, checker configuration,
 implementation digest, evidence classes, exclusions, and diagnostics as an
 unsigned content-addressed candidate; ordinary conformance remains read-only.

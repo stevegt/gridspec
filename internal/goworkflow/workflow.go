@@ -463,10 +463,8 @@ func parseGenerated(data []byte) (GeneratedSet, error) {
 		if artifact.Name == "" || artifact.Package == "" || artifactNames[foldedName] {
 			return GeneratedSet{}, fmt.Errorf("generated artifacts require unique nonempty names and packages")
 		}
-		for _, r := range artifact.Name {
-			if !(r >= 'a' && r <= 'z' || r >= 'A' && r <= 'Z' || r >= '0' && r <= '9' || r == '-' || r == '_') {
-				return GeneratedSet{}, fmt.Errorf("invalid generated artifact name %q", artifact.Name)
-			}
+		if !validArtifactName(artifact.Name) {
+			return GeneratedSet{}, fmt.Errorf("invalid generated artifact name %q", artifact.Name)
 		}
 		if !localPackage(artifact.Package) {
 			return GeneratedSet{}, fmt.Errorf("invalid generated artifact package %q", artifact.Package)
