@@ -42,6 +42,21 @@ func TestViewRejectsInvalidLabelFormatBeforeRepositoryAccess(t *testing.T) {
 	}
 }
 
+func TestDiffRejectsUsageBeforeRepositoryAccess(t *testing.T) {
+	for _, args := range [][]string{
+		{"diff"},
+		{"diff", "--proposal", "proposal", "--format", "yaml"},
+	} {
+		var stdout, stderr bytes.Buffer
+		if code := run(args, &stdout, &stderr); code != 2 {
+			t.Fatalf("%v code=%d stderr=%s", args, code, stderr.String())
+		}
+		if !strings.Contains(stderr.String(), "gridspec diff") {
+			t.Fatalf("%v stderr=%q", args, stderr.String())
+		}
+	}
+}
+
 func TestProposalUpdateCannotWrite(t *testing.T) {
 	var stdout, stderr bytes.Buffer
 	if code := run([]string{"update", "--proposal", "proposal", "--write"}, &stdout, &stderr); code != 2 {

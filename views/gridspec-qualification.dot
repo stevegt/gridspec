@@ -1,0 +1,25 @@
+digraph gridspec_view {
+  graph [label="github.com/promisegrid/gridspec (generated view)", labelloc=t];
+  node [shape=plaintext];
+  "id:gridspec.qualification.accepted" [label="Load accepted scenarios",shape=circle,tooltip="gridspec.qualification.accepted: Reload the selected state CID and select its executable command contracts."];
+  "id:gridspec.qualification.available" [label="Scenario oracle available?",shape=diamond,tooltip="gridspec.qualification.available: Branch before generation according to whether accepted executable scenarios exist."];
+  "id:gridspec.qualification.command" [label="Run accepted commands",shape=box,tooltip="gridspec.qualification.command: Execute bounded ordered steps in fresh fixtures using separately built artifacts."];
+  "id:gridspec.qualification.generate" [label="Stage generated Go",shape=box,tooltip="gridspec.qualification.generate: Write model output into an isolated candidate module without publishing it."];
+  "id:gridspec.qualification.gotest" [label="Run generated Go tests",shape=box,tooltip="gridspec.qualification.gotest: Treat model-authored Go tests as supplemental evidence before independent scenarios."];
+  "id:gridspec.qualification.passed" [label="Qualification passed?",shape=diamond,tooltip="gridspec.qualification.passed: Reject any output whose exact observations differ from accepted expectations."];
+  "id:gridspec.qualification.propose" [label="Propose missing scenarios",shape=box,tooltip="gridspec.qualification.propose: Ask the model for bounded scenarios and publish a CAS-audited unsigned proposal."];
+  "id:gridspec.qualification.publish" [label="Publish qualified output",shape=doublecircle,tooltip="gridspec.qualification.publish: Write or expose code and publish deterministic qualification evidence in CAS."];
+  "id:gridspec.qualification.reject" [label="Reject candidate output",shape=doublecircle,tooltip="gridspec.qualification.reject: Leave destinations and candidate refs unchanged after any qualification failure."];
+  "id:gridspec.qualification.stop" [label="Stop without code",shape=doublecircle,tooltip="gridspec.qualification.stop: Require separate acceptance of the scenario proposal before compilation resumes."];
+  "id:gridspec.qualification.accepted" -> "id:gridspec.qualification.available" [label="Check scenario availability",tooltip="gridspec.qualification.flow.accepted.available"];
+  "id:gridspec.qualification.available" -> "id:gridspec.qualification.generate" [label="Available",tooltip="gridspec.qualification.flow.available.generate"];
+  "id:gridspec.qualification.available" -> "id:gridspec.qualification.propose" [label="Missing",tooltip="gridspec.qualification.flow.available.propose"];
+  "id:gridspec.qualification.command" -> "id:gridspec.qualification.passed" [label="Compare observations",tooltip="gridspec.qualification.flow.command.passed"];
+  "id:gridspec.qualification.command" -> "id:gridspec.qualification.reject" [label="Command oracle fails",tooltip="gridspec.qualification.flow.command.reject: Reject the staged module when an accepted command observation differs."];
+  "id:gridspec.qualification.generate" -> "id:gridspec.qualification.gotest" [label="Test staged module",tooltip="gridspec.qualification.flow.generate.gotest"];
+  "id:gridspec.qualification.gotest" -> "id:gridspec.qualification.command" [label="Run independent oracle",tooltip="gridspec.qualification.flow.gotest.command"];
+  "id:gridspec.qualification.gotest" -> "id:gridspec.qualification.reject" [label="Go tests fail",tooltip="gridspec.qualification.flow.gotest.reject: Reject the staged module when its supplemental generated tests fail."];
+  "id:gridspec.qualification.passed" -> "id:gridspec.qualification.publish" [label="Pass",tooltip="gridspec.qualification.flow.passed.publish"];
+  "id:gridspec.qualification.passed" -> "id:gridspec.qualification.reject" [label="Fail",tooltip="gridspec.qualification.flow.passed.reject"];
+  "id:gridspec.qualification.propose" -> "id:gridspec.qualification.stop" [label="Await acceptance",tooltip="gridspec.qualification.flow.propose.stop"];
+}

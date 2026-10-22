@@ -62,7 +62,9 @@ The forward path is:
 ```text
 accepted or explicitly selected proposal state CID -> verify CAS closure
                -> derived semantic IR -> LLM translation -> candidate Go
-               -> deterministic shape checks -> gofmt -> go test -> review
+               -> deterministic shape checks -> gofmt -> staged module
+               -> generated Go tests -> accepted command scenarios
+               -> qualified output and CAS evidence -> review
 ```
 
 The reverse path is:
@@ -78,6 +80,49 @@ not merely commentary, but it is also not accepted on trust. The deterministic
 shell checks syntax, paths, ownership, content hashes, state replay, semantic
 rules, bounded models, and executable tests. A human or separately authorized
 agent accepts the resulting transaction or code change.
+
+## Mandatory build qualification
+
+Accepted specifications contain language-neutral `contract.scenario` command
+oracles. Each names a generated artifact, covered semantic IDs, inline fixture
+files, a repeat count, and ordered process steps with exact exit, stream, and
+file expectations. The generated-file response separately maps artifact names
+to Go main packages. The model may write its own Go tests, but those tests are
+supplemental: accepted scenarios are the independent publication gate.
+Artifact mappings may name only `.` or a `./`-relative package inside the
+staged generated module.
+
+`build` writes a temporary module, runs its Go tests, builds the mapped
+artifacts, and executes every accepted scenario. Each repeat receives a fresh
+fixture directory; steps within a repeat are separate processes sharing that
+directory. This exposes persisted state and restart behavior. GridSpec rejects
+timeouts, oversized output, mismatched observations, and filesystem changes a
+step did not declare. Only a passing stage is renamed into the requested output
+tree.
+
+`update` uses the same gate. Even a dry run reconstructs the existing Go bundle
+in a temporary module, applies the proposed owned-file changes there, and
+qualifies that result without touching the source tree. Write mode rechecks the
+source hashes after qualification and applies only the already-tested bytes,
+with rollback protection for write failures.
+
+The deterministic `gridspec.qualification/v1` report binds source identity,
+output digest, artifact mappings, Go-test observations, normalized scenario
+observations, and expected-file hashes. It is stored as the verification bytes
+already linked by the derived-artifact v1 CAS message. The ownership manifest
+v3 records the corresponding evidence digest and scenario IDs; v1 and v2
+manifests remain readable.
+
+When no executable scenario is accepted, compilation does not degrade to a
+warning or unsafe mode. `gridspec scenarios` asks an LLM for bounded strict JSON,
+constructs a preserving transaction itself, stores the exact exchange in CAS,
+and publishes an unsigned proposal. `build` and `update` can initiate that same
+proposal path, but emit no code until a separate signed acceptance. A proposal
+preview never creates a proposal on top of itself.
+
+`gridspec diff --proposal CID` recursively compares the two materialized states
+and emits sorted JSON-pointer changes. It is deterministic review machinery;
+it does not ask an LLM to decide whether the change is acceptable.
 
 Compilation and disassembly are partial and potentially lossy. A specification
 can intentionally leave implementation latitude; Go can contain optimizations,

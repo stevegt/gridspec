@@ -11,6 +11,7 @@ import (
 	"github.com/promisegrid/gridspec/internal/config"
 	"github.com/promisegrid/gridspec/internal/diag"
 	"github.com/promisegrid/gridspec/internal/model"
+	"github.com/promisegrid/gridspec/internal/scenarios"
 	"github.com/promisegrid/gridspec/internal/source"
 )
 
@@ -53,11 +54,24 @@ func Run(ctx Context) ([]diag.Diagnostic, []model.Binding) {
 	ds = append(ds, checkMachines(ctx, idx)...)
 	ds = append(ds, checkData(ctx, idx)...)
 	ds = append(ds, checkEffectsAndChannels(ctx, idx)...)
+	ds = append(ds, checkScenarioContracts(ctx)...)
 	ds = append(ds, checkBuildReadiness(ctx, idx)...)
 	ds = applyProfile(ctx.Profile, ds)
 	ds = applyWaivers(ctx, idx, ds)
 	diag.Sort(ds)
 	return ds, bindings
+}
+
+func checkScenarioContracts(ctx Context) []diag.Diagnostic {
+	var result []diag.Diagnostic
+	for _, problem := range scenarios.Validate(*ctx.IR) {
+		result = append(result, diagnostic(
+			"SDV610", diag.SeverityError, problem.Location, problem.Message,
+			"add or repair the bounded executable command scenario in accepted specification state",
+			problem.ScenarioID, false,
+		))
+	}
+	return result
 }
 
 var validID = regexp.MustCompile(`^[A-Za-z][A-Za-z0-9_.:/-]*$`)

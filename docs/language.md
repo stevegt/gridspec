@@ -40,7 +40,7 @@ Version 1 recognizes these checker-facing entity kinds:
 - `node` and `edge`, with a human-readable title, optional summary, a
   `graph_id`, semantic kind/status, attributes, and edge endpoints;
 - `contract`, carrying typed agent, promise, machine, data, channel, effect,
-  claim, waiver, latitude, and metadata fields;
+  scenario, claim, waiver, latitude, and metadata fields;
 - `document`, carrying exact UTF-8 Markdown content, its lowercase SHA-256,
   canonical path, and heading/link indexes that must rederive exactly from the
   content.
@@ -55,6 +55,16 @@ are trimmed, single-line text of at most 40 characters. Summaries, when
 present, are trimmed, single-line text of at most 140 characters. These fields
 are compiler input: an LLM may propose them, but they change authority only
 through the normal immutable transaction and signed-acceptance path.
+
+An executable scenario contract is a compiler-owned behavioral oracle. It
+names an artifact, semantic IDs it covers, a repeat count, inline fixture files,
+and one or more ordered command steps. Every step declares exact exit, stdout,
+stderr, and file expectations. Paths must be safe relative slash paths; step
+IDs and covered IDs are unique; repeats are 1–10; a scenario has at most 64
+steps; fixture content is limited to 8 MiB; streams and expected files are
+limited to 1 MiB; timeouts default to 5 seconds and cannot exceed 60 seconds.
+These limits make the observation finite. They do not make arbitrary Go
+equivalence decidable or provide an operating-system sandbox.
 
 ## Events and acceptance
 

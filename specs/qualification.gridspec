@@ -1,0 +1,159 @@
+gridspec 1
+put graph graph.gridspec.qualification {
+  title = "Mandatory build qualification",
+  summary = "Requires generated Go to pass accepted command scenarios before output or candidate publication.",
+  kind = "algorithm", status = "active", directed = true, strict = true,
+  url = "../docs/architecture.md", attrs = {},
+  location = { file = "views/gridspec-qualification.dot", line = 1, column = 1 }
+}
+put contract graph.gridspec.qualification {
+  schema = "gridspec.contract/v1", for = "graph.gridspec.qualification",
+  kind = "algorithm", status = "active",
+  summary = "Accepted command contracts, not generated tests, decide whether compiler output qualifies.",
+  metadata = {
+    authority = "accepted scenario contracts",
+    missing_oracle = "publish an audited unsigned scenario proposal and emit no code",
+    evidence = "gridspec.qualification/v1 stored through the derived-artifact CAS envelope",
+    update = "qualify a reconstructed temporary module before applying hash-rechecked owned files"
+  },
+  location = { file = "docs/architecture.md", line = 1, column = 1 }
+}
+put node gridspec.qualification.accepted {
+  title = "Load accepted scenarios", summary = "Reload the selected state CID and select its executable command contracts.",
+  graph_id = "graph.gridspec.qualification", kind = "start", status = "active",
+  attrs = { specdot_initial = "true" }, location = { file = "views/gridspec-qualification.dot", line = 3, column = 1 }
+}
+put node gridspec.qualification.available {
+  title = "Scenario oracle available?", summary = "Branch before generation according to whether accepted executable scenarios exist.",
+  graph_id = "graph.gridspec.qualification", kind = "decision", status = "active",
+  attrs = {}, location = { file = "views/gridspec-qualification.dot", line = 4, column = 1 }
+}
+put node gridspec.qualification.propose {
+  title = "Propose missing scenarios", summary = "Ask the model for bounded scenarios and publish a CAS-audited unsigned proposal.",
+  graph_id = "graph.gridspec.qualification", kind = "process", status = "active",
+  attrs = {}, location = { file = "views/gridspec-qualification.dot", line = 5, column = 1 }
+}
+put node gridspec.qualification.stop {
+  title = "Stop without code", summary = "Require separate acceptance of the scenario proposal before compilation resumes.",
+  graph_id = "graph.gridspec.qualification", kind = "final", status = "active",
+  attrs = { specdot_final = "true" }, location = { file = "views/gridspec-qualification.dot", line = 6, column = 1 }
+}
+put node gridspec.qualification.generate {
+  title = "Stage generated Go", summary = "Write model output into an isolated candidate module without publishing it.",
+  graph_id = "graph.gridspec.qualification", kind = "process", status = "active",
+  attrs = {}, location = { file = "views/gridspec-qualification.dot", line = 7, column = 1 }
+}
+put node gridspec.qualification.gotest {
+  title = "Run generated Go tests", summary = "Treat model-authored Go tests as supplemental evidence before independent scenarios.",
+  graph_id = "graph.gridspec.qualification", kind = "process", status = "active",
+  attrs = {}, location = { file = "views/gridspec-qualification.dot", line = 8, column = 1 }
+}
+put node gridspec.qualification.command {
+  title = "Run accepted commands", summary = "Execute bounded ordered steps in fresh fixtures using separately built artifacts.",
+  graph_id = "graph.gridspec.qualification", kind = "process", status = "active",
+  attrs = {}, location = { file = "views/gridspec-qualification.dot", line = 9, column = 1 }
+}
+put node gridspec.qualification.passed {
+  title = "Qualification passed?", summary = "Reject any output whose exact observations differ from accepted expectations.",
+  graph_id = "graph.gridspec.qualification", kind = "decision", status = "active",
+  attrs = {}, location = { file = "views/gridspec-qualification.dot", line = 10, column = 1 }
+}
+put node gridspec.qualification.publish {
+  title = "Publish qualified output", summary = "Write or expose code and publish deterministic qualification evidence in CAS.",
+  graph_id = "graph.gridspec.qualification", kind = "final", status = "active",
+  attrs = { specdot_final = "true" }, location = { file = "views/gridspec-qualification.dot", line = 11, column = 1 }
+}
+put node gridspec.qualification.reject {
+  title = "Reject candidate output", summary = "Leave destinations and candidate refs unchanged after any qualification failure.",
+  graph_id = "graph.gridspec.qualification", kind = "final", status = "active",
+  attrs = { specdot_final = "true" }, location = { file = "views/gridspec-qualification.dot", line = 12, column = 1 }
+}
+put edge gridspec.qualification.flow.accepted.available {
+  title = "Check scenario availability", graph_id = "graph.gridspec.qualification", kind = "flow", status = "active",
+  from = "gridspec.qualification.accepted", to = "gridspec.qualification.available", attrs = {},
+  location = { file = "views/gridspec-qualification.dot", line = 14, column = 1 }
+}
+put edge gridspec.qualification.flow.available.propose {
+  title = "Missing", graph_id = "graph.gridspec.qualification", kind = "flow", status = "active",
+  from = "gridspec.qualification.available", to = "gridspec.qualification.propose", attrs = { specdot_branch = "missing" },
+  location = { file = "views/gridspec-qualification.dot", line = 15, column = 1 }
+}
+put edge gridspec.qualification.flow.propose.stop {
+  title = "Await acceptance", graph_id = "graph.gridspec.qualification", kind = "flow", status = "active",
+  from = "gridspec.qualification.propose", to = "gridspec.qualification.stop", attrs = {},
+  location = { file = "views/gridspec-qualification.dot", line = 16, column = 1 }
+}
+put edge gridspec.qualification.flow.available.generate {
+  title = "Available", graph_id = "graph.gridspec.qualification", kind = "flow", status = "active",
+  from = "gridspec.qualification.available", to = "gridspec.qualification.generate", attrs = { specdot_branch = "available" },
+  location = { file = "views/gridspec-qualification.dot", line = 17, column = 1 }
+}
+put edge gridspec.qualification.flow.generate.gotest {
+  title = "Test staged module", graph_id = "graph.gridspec.qualification", kind = "flow", status = "active",
+  from = "gridspec.qualification.generate", to = "gridspec.qualification.gotest", attrs = {},
+  location = { file = "views/gridspec-qualification.dot", line = 18, column = 1 }
+}
+put edge gridspec.qualification.flow.gotest.command {
+  title = "Run independent oracle", graph_id = "graph.gridspec.qualification", kind = "flow", status = "active",
+  from = "gridspec.qualification.gotest", to = "gridspec.qualification.command", attrs = {},
+  location = { file = "views/gridspec-qualification.dot", line = 19, column = 1 }
+}
+put edge gridspec.qualification.flow.command.passed {
+  title = "Compare observations", graph_id = "graph.gridspec.qualification", kind = "flow", status = "active",
+  from = "gridspec.qualification.command", to = "gridspec.qualification.passed", attrs = {},
+  location = { file = "views/gridspec-qualification.dot", line = 20, column = 1 }
+}
+put edge gridspec.qualification.flow.passed.publish {
+  title = "Pass", graph_id = "graph.gridspec.qualification", kind = "flow", status = "active",
+  from = "gridspec.qualification.passed", to = "gridspec.qualification.publish", attrs = { specdot_branch = "pass" },
+  location = { file = "views/gridspec-qualification.dot", line = 21, column = 1 }
+}
+put edge gridspec.qualification.flow.passed.reject {
+  title = "Fail", graph_id = "graph.gridspec.qualification", kind = "flow", status = "active",
+  from = "gridspec.qualification.passed", to = "gridspec.qualification.reject", attrs = { specdot_branch = "fail" },
+  location = { file = "views/gridspec-qualification.dot", line = 22, column = 1 }
+}
+put graph scenario.gridspec.qualification.smoke {
+  title = "Generated CLI smoke test", summary = "Requires a generated GridSpec CLI to report its deterministic version twice.",
+  kind = "scenario", status = "active", directed = true, strict = true,
+  url = "../docs/architecture.md", attrs = { specdot_depends_on = "graph.gridspec.qualification" },
+  location = { file = "views/gridspec-qualification.dot", line = 25, column = 1 }
+}
+put node gridspec.qualification.smoke.start {
+  title = "Invoke generated CLI", graph_id = "scenario.gridspec.qualification.smoke",
+  kind = "start", status = "active", attrs = { specdot_initial = "true" },
+  location = { file = "views/gridspec-qualification.dot", line = 27, column = 1 }
+}
+put node gridspec.qualification.smoke.done {
+  title = "Observe stable version", graph_id = "scenario.gridspec.qualification.smoke",
+  kind = "final", status = "active", attrs = { specdot_final = "true" },
+  location = { file = "views/gridspec-qualification.dot", line = 28, column = 1 }
+}
+put edge gridspec.qualification.smoke.flow {
+  title = "Version matches", graph_id = "scenario.gridspec.qualification.smoke",
+  kind = "flow", status = "active", from = "gridspec.qualification.smoke.start", to = "gridspec.qualification.smoke.done", attrs = {},
+  location = { file = "views/gridspec-qualification.dot", line = 30, column = 1 }
+}
+put contract scenario.gridspec.qualification.smoke {
+  schema = "gridspec.contract/v1", for = "scenario.gridspec.qualification.smoke",
+  kind = "scenario", status = "active",
+  summary = "A compiler-owned command oracle independent of generated Go tests.",
+  scenario = {
+    artifact = "gridspec",
+    covers = [
+      "scenario.gridspec.qualification.smoke",
+      "gridspec.qualification.smoke.start",
+      "gridspec.qualification.smoke.done",
+      "gridspec.qualification.smoke.flow",
+      "gridspec.qualification.command"
+    ],
+    repeat = 2,
+    fixtures = [],
+    steps = [{
+      id = "qualification.version",
+      args = ["version"], stdin = "", timeout = "5s",
+      expect = { exit_code = 0, stdout = "gridspec dev\n", stderr = "", files = [] }
+    }]
+  },
+  location = { file = "docs/architecture.md", line = 1, column = 1 }
+}

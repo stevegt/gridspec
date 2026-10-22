@@ -103,6 +103,7 @@ type Contract struct {
 	Data       *DataContract       `json:"data,omitempty" yaml:"data,omitempty"`
 	Channel    *ChannelContract    `json:"channel,omitempty" yaml:"channel,omitempty"`
 	Effect     *EffectContract     `json:"effect,omitempty" yaml:"effect,omitempty"`
+	Scenario   *ScenarioContract   `json:"scenario,omitempty" yaml:"scenario,omitempty"`
 	Claims     []Claim             `json:"claims,omitempty" yaml:"claims,omitempty"`
 	Waivers    []Waiver            `json:"waivers,omitempty" yaml:"waivers,omitempty"`
 	Latitude   []Latitude          `json:"latitude,omitempty" yaml:"latitude,omitempty"`
@@ -234,6 +235,45 @@ type EffectContract struct {
 	Reconcile   string   `json:"reconcile,omitempty" yaml:"reconcile,omitempty"`
 	Evidence    string   `json:"evidence,omitempty" yaml:"evidence,omitempty"`
 	Assessor    string   `json:"assessor,omitempty" yaml:"assessor,omitempty"`
+}
+
+// ScenarioContract is an accepted, language-neutral command oracle. The
+// compiler supplies the artifact named here; each step starts a fresh process
+// in the same fixture workspace so scenarios can observe persistence and
+// restart behavior without depending on generated Go tests.
+type ScenarioContract struct {
+	Artifact string                `json:"artifact" yaml:"artifact"`
+	Covers   []string              `json:"covers,omitempty" yaml:"covers,omitempty"`
+	Repeat   int64                 `json:"repeat" yaml:"repeat"`
+	Fixtures []ScenarioFixtureFile `json:"fixtures,omitempty" yaml:"fixtures,omitempty"`
+	Steps    []ScenarioStep        `json:"steps" yaml:"steps"`
+}
+
+type ScenarioFixtureFile struct {
+	Path    string `json:"path" yaml:"path"`
+	Content string `json:"content" yaml:"content"`
+}
+
+type ScenarioStep struct {
+	ID      string         `json:"id" yaml:"id"`
+	Args    []string       `json:"args,omitempty" yaml:"args,omitempty"`
+	Stdin   string         `json:"stdin,omitempty" yaml:"stdin,omitempty"`
+	Timeout string         `json:"timeout,omitempty" yaml:"timeout,omitempty"`
+	Expect  ScenarioExpect `json:"expect" yaml:"expect"`
+}
+
+type ScenarioExpect struct {
+	ExitCode *int64                    `json:"exit_code" yaml:"exit_code"`
+	Stdout   *string                   `json:"stdout" yaml:"stdout"`
+	Stderr   *string                   `json:"stderr" yaml:"stderr"`
+	Files    []ScenarioFileExpectation `json:"files,omitempty" yaml:"files,omitempty"`
+}
+
+type ScenarioFileExpectation struct {
+	Path   string  `json:"path" yaml:"path"`
+	Exists *bool   `json:"exists" yaml:"exists"`
+	Text   *string `json:"text,omitempty" yaml:"text,omitempty"`
+	JSON   *string `json:"json,omitempty" yaml:"json,omitempty"`
 }
 
 type Claim struct {

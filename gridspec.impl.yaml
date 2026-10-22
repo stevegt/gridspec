@@ -109,6 +109,28 @@ bindings:
   - {spec_id: gridspec.describe.proposal, package: github.com/promisegrid/gridspec/internal/project, kind: method, receiver: Project, name: ProposeFrom}
   - {spec_id: gridspec.describe.noop, package: github.com/promisegrid/gridspec/internal/describe, kind: func, name: Generate}
   - {spec_id: gridspec.describe.failure, package: github.com/promisegrid/gridspec/internal/describe, kind: func, name: Generate}
+  - {spec_id: graph.gridspec.qualification, package: github.com/promisegrid/gridspec/internal/goworkflow, kind: package}
+  - {spec_id: gridspec.qualification.accepted, package: github.com/promisegrid/gridspec/internal/scenarios, kind: func, name: Definitions}
+  - {spec_id: gridspec.qualification.available, package: github.com/promisegrid/gridspec/internal/scenarios, kind: func, name: Missing}
+  - {spec_id: gridspec.qualification.propose, package: github.com/promisegrid/gridspec/internal/scenarios, kind: func, name: Generate}
+  - {spec_id: gridspec.qualification.stop, package: github.com/promisegrid/gridspec/internal/scenarios, kind: func, name: Generate}
+  - {spec_id: gridspec.qualification.generate, package: github.com/promisegrid/gridspec/internal/goworkflow, kind: func, name: Build}
+  - {spec_id: gridspec.qualification.gotest, package: github.com/promisegrid/gridspec/internal/goworkflow, kind: func, name: runGoTests}
+  - {spec_id: gridspec.qualification.command, package: github.com/promisegrid/gridspec/internal/goworkflow, kind: func, name: qualify}
+  - {spec_id: gridspec.qualification.passed, package: github.com/promisegrid/gridspec/internal/goworkflow, kind: func, name: qualify}
+  - {spec_id: gridspec.qualification.publish, package: github.com/promisegrid/gridspec/internal/project, kind: method, receiver: Project, name: PublishCandidate}
+  - {spec_id: gridspec.qualification.reject, package: github.com/promisegrid/gridspec/internal/goworkflow, kind: func, name: Build}
+  - {spec_id: gridspec.qualification.flow.accepted.available, package: github.com/promisegrid/gridspec/internal/scenarios, kind: func, name: Definitions}
+  - {spec_id: gridspec.qualification.flow.available.propose, package: github.com/promisegrid/gridspec/internal/scenarios, kind: func, name: Generate}
+  - {spec_id: gridspec.qualification.flow.propose.stop, package: github.com/promisegrid/gridspec/internal/scenarios, kind: func, name: Generate}
+  - {spec_id: gridspec.qualification.flow.available.generate, package: github.com/promisegrid/gridspec/internal/goworkflow, kind: func, name: Build}
+  - {spec_id: gridspec.qualification.flow.generate.gotest, package: github.com/promisegrid/gridspec/internal/goworkflow, kind: func, name: runGoTests}
+  - {spec_id: gridspec.qualification.flow.gotest.command, package: github.com/promisegrid/gridspec/internal/goworkflow, kind: func, name: qualify}
+  - {spec_id: gridspec.qualification.flow.gotest.reject, package: github.com/promisegrid/gridspec/internal/goworkflow, kind: func, name: qualify}
+  - {spec_id: gridspec.qualification.flow.command.passed, package: github.com/promisegrid/gridspec/internal/goworkflow, kind: func, name: qualify}
+  - {spec_id: gridspec.qualification.flow.command.reject, package: github.com/promisegrid/gridspec/internal/goworkflow, kind: func, name: qualify}
+  - {spec_id: gridspec.qualification.flow.passed.publish, package: github.com/promisegrid/gridspec/internal/project, kind: method, receiver: Project, name: PublishCandidate}
+  - {spec_id: gridspec.qualification.flow.passed.reject, package: github.com/promisegrid/gridspec/internal/goworkflow, kind: func, name: Build}
 
 scenarios:
   - spec_id: scenario.specdot.clean
@@ -222,6 +244,22 @@ scenarios:
       package: ./internal/conform
       test: TestRunRequiresEvidenceOrExplicitExclusion
       timeout: 30s
+
+  - spec_id: scenario.gridspec.qualification.smoke
+    covers:
+      - gridspec.qualification.smoke.start
+      - gridspec.qualification.smoke.done
+      - gridspec.qualification.smoke.flow
+    command:
+      artifact: gridspec
+      args: [version]
+      fixture: testdata/qualification-empty
+      timeout: 5s
+      repeat: 2
+    expect:
+      exit_code: 0
+      stdout: {equals: "gridspec dev\n"}
+      stderr: {empty: true}
 
 exclusions:
   - reason: Authority-flow edges are relationships covered by the bound transaction, replay, vet, proposal, acceptance, and commit objects.

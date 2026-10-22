@@ -14,7 +14,6 @@ import (
 	"io"
 	"io/fs"
 	"os"
-	"os/exec"
 	"path/filepath"
 	"sort"
 	"strings"
@@ -23,6 +22,7 @@ import (
 
 	"github.com/promisegrid/gridspec/internal/cas"
 	"github.com/promisegrid/gridspec/internal/provider"
+	"github.com/promisegrid/gridspec/internal/scenarios"
 	"github.com/promisegrid/gridspec/internal/specsource"
 	"github.com/promisegrid/gridspec/internal/specstate"
 	"github.com/promisegrid/gridspec/internal/txnlang"
@@ -33,6 +33,7 @@ const (
 	manifestName     = ".gridspec-generated.json"
 	manifestSchemaV1 = "gridspec.generated/v1"
 	manifestSchemaV2 = "gridspec.generated/v2"
+	manifestSchemaV3 = "gridspec.generated/v3"
 )
 
 type SourceFile struct {
@@ -51,18 +52,33 @@ type GeneratedFile struct {
 	SpecIDs []string `json:"spec_ids"`
 }
 
+type GeneratedArtifact struct {
+	Name    string `json:"name"`
+	Package string `json:"package"`
+}
+
 type GeneratedSet struct {
-	Files         []GeneratedFile `json:"files"`
-	Summary       string          `json:"summary"`
-	ProviderModel string          `json:"-"`
-	ResponseID    string          `json:"-"`
+	Files         []GeneratedFile     `json:"files"`
+	Artifacts     []GeneratedArtifact `json:"artifacts"`
+	Summary       string              `json:"summary"`
+	ProviderModel string              `json:"-"`
+	ResponseID    string              `json:"-"`
+	Qualification QualificationReport `json:"-"`
 }
 
 type Manifest struct {
-	Schema   string         `json:"schema"`
-	Source   ManifestSource `json:"source,omitempty"`
-	StateCID string         `json:"state_cid,omitempty"`
-	Files    []ManifestFile `json:"files"`
+	Schema        string                `json:"schema"`
+	Source        ManifestSource        `json:"source,omitempty"`
+	StateCID      string                `json:"state_cid,omitempty"`
+	Artifacts     []GeneratedArtifact   `json:"artifacts,omitempty"`
+	Qualification ManifestQualification `json:"qualification,omitempty"`
+	Files         []ManifestFile        `json:"files"`
+}
+
+type ManifestQualification struct {
+	Schema         string   `json:"schema"`
+	EvidenceSHA256 string   `json:"evidence_sha256"`
+	Scenarios      []string `json:"scenarios"`
 }
 
 type ManifestSource struct {
@@ -204,7 +220,7 @@ func generate(ctx context.Context, model provider.Provider, state specstate.Stat
 	}
 	response, err := model.Generate(ctx, provider.Request{
 		Operation:    "gridspec_to_go",
-		Instructions: "Compile the supplied CAS-materialized GridSpec state into Go. Return only one strict JSON object: {\"files\":[{\"path\":string,\"content\":string,\"spec_ids\":[string]}],\"summary\":string}. A from-scratch build must include go.mod. Paths must be relative. Do not use Markdown fences. Generated code must compile and test; do not invent behavior omitted by the specs without documenting the choice in code.",
+		Instructions: "Compile the supplied CAS-materialized GridSpec state into Go. Return only one strict JSON object: {\"files\":[{\"path\":string,\"content\":string,\"spec_ids\":[string]}],\"artifacts\":[{\"name\":string,\"package\":string}],\"summary\":string}. A from-scratch build must include go.mod. Map every command artifact named by an accepted scenario to its Go main package. Paths must be relative. Do not use Markdown fences. Generated code must compile and test; do not invent behavior omitted by the specs without documenting the choice in code.",
 		Input:        string(text), MaxOutputTokens: 65_536,
 	})
 	if err != nil {
@@ -221,6 +237,12 @@ func Build(ctx context.Context, model provider.Provider, store cas.Store, source
 	if err != nil {
 		return GeneratedSet{}, err
 	}
+	if _, err := scenarios.Definitions(state); err != nil {
+		return GeneratedSet{}, err
+	}
+	if _, err := os.Stat(output); err == nil || !os.IsNotExist(err) {
+		return GeneratedSet{}, fmt.Errorf("build output %s already exists", output)
+	}
 	generated, _, err := generate(ctx, model, state)
 	if err != nil {
 		return GeneratedSet{}, err
@@ -231,9 +253,6 @@ func Build(ctx context.Context, model provider.Provider, store cas.Store, source
 	}
 	if !hasModule {
 		return GeneratedSet{}, fmt.Errorf("from-scratch build did not produce go.mod")
-	}
-	if _, err := os.Stat(output); err == nil || !os.IsNotExist(err) {
-		return GeneratedSet{}, fmt.Errorf("build output %s already exists", output)
 	}
 	parent, err := filepath.Abs(filepath.Dir(output))
 	if err != nil {
@@ -247,10 +266,17 @@ func Build(ctx context.Context, model provider.Provider, store cas.Store, source
 		return GeneratedSet{}, err
 	}
 	defer os.RemoveAll(stage)
-	if err := writeSet(stage, source, generated); err != nil {
+	if err := writeGeneratedFiles(stage, generated.Files); err != nil {
 		return GeneratedSet{}, err
 	}
-	if err := testGo(ctx, stage); err != nil {
+	if err := qualify(ctx, stage, state, source, &generated); err != nil {
+		return GeneratedSet{}, err
+	}
+	manifest, err := manifestV3(source, generated, Manifest{})
+	if err != nil {
+		return GeneratedSet{}, err
+	}
+	if err := writeManifest(stage, manifest); err != nil {
 		return GeneratedSet{}, err
 	}
 	if err := os.Rename(stage, output); err != nil {
@@ -266,7 +292,8 @@ type UpdateResult struct {
 }
 
 // Update compiles against existing code, enforces the ownership manifest, and
-// optionally writes changes. A failing Go test rolls written files back.
+// qualifies a reconstructed temporary module before optionally writing the
+// already-qualified owned changes.
 func Update(ctx context.Context, model provider.Provider, store cas.Store, source specsource.Identity, root string, write bool) (UpdateResult, error) {
 	if model == nil {
 		return UpdateResult{}, fmt.Errorf("model provider is required")
@@ -276,6 +303,9 @@ func Update(ctx context.Context, model provider.Provider, store cas.Store, sourc
 	}
 	state, err := loadState(ctx, store, source)
 	if err != nil {
+		return UpdateResult{}, err
+	}
+	if _, err := scenarios.Definitions(state); err != nil {
 		return UpdateResult{}, err
 	}
 	bundle, err := Scan(root)
@@ -292,7 +322,7 @@ func Update(ctx context.Context, model provider.Provider, store cas.Store, sourc
 	}{string(spec), bundle})
 	response, err := model.Generate(ctx, provider.Request{
 		Operation:    "update_go_from_gridspec",
-		Instructions: "Update only GridSpec-owned Go files to conform to the supplied CAS-materialized state. Return only strict JSON {\"files\":[{\"path\":string,\"content\":string,\"spec_ids\":[string]}],\"summary\":string}. Never return unowned files, Markdown fences, deletions, or signing material.",
+		Instructions: "Update only GridSpec-owned Go files to conform to the supplied CAS-materialized state. Return only strict JSON {\"files\":[{\"path\":string,\"content\":string,\"spec_ids\":[string]}],\"artifacts\":[{\"name\":string,\"package\":string}],\"summary\":string}. Map every command artifact named by an accepted scenario to its Go main package. Never return unowned files, Markdown fences, deletions, or signing material.",
 		Input:        string(input), MaxOutputTokens: 65_536,
 	})
 	if err != nil {
@@ -307,41 +337,37 @@ func Update(ctx context.Context, model provider.Provider, store cas.Store, sourc
 	if err != nil {
 		return UpdateResult{}, err
 	}
-	owned := make(map[string]ManifestFile)
-	for _, file := range manifest.Files {
-		owned[file.Path] = file
-	}
 	result := UpdateResult{Generated: generated}
-	for _, file := range generated.Files {
-		previous, exists := owned[file.Path]
-		path := filepath.Join(root, filepath.FromSlash(file.Path))
-		old, readErr := os.ReadFile(path)
-		if readErr == nil {
-			if !exists {
-				return UpdateResult{}, fmt.Errorf("refusing to overwrite unowned file %s", file.Path)
-			}
-			digest := sha256.Sum256(old)
-			if hex.EncodeToString(digest[:]) != previous.SHA256 {
-				return UpdateResult{}, fmt.Errorf("owned file %s changed outside GridSpec", file.Path)
-			}
-			if bytes.Equal(old, []byte(file.Content)) {
-				continue
-			}
-			result.Changes = append(result.Changes, "M "+file.Path)
-		} else if os.IsNotExist(readErr) {
-			if exists {
-				return UpdateResult{}, fmt.Errorf("owned file %s is missing", file.Path)
-			}
-			if !strings.HasPrefix(file.Path, "gridspec_gen/") {
-				return UpdateResult{}, fmt.Errorf("new generated file %s must be under gridspec_gen/", file.Path)
-			}
-			result.Changes = append(result.Changes, "A "+file.Path)
-		} else {
-			return UpdateResult{}, readErr
-		}
+	result.Changes, err = verifyGeneratedOwnership(root, generated.Files, manifest)
+	if err != nil {
+		return UpdateResult{}, err
+	}
+	stage, err := os.MkdirTemp("", ".gridspec-update-")
+	if err != nil {
+		return UpdateResult{}, err
+	}
+	defer os.RemoveAll(stage)
+	if err := writeBundle(stage, bundle); err != nil {
+		return UpdateResult{}, err
+	}
+	if err := writeGeneratedFiles(stage, generated.Files); err != nil {
+		return UpdateResult{}, err
+	}
+	if err := qualify(ctx, stage, state, source, &generated); err != nil {
+		return UpdateResult{}, err
+	}
+	result.Generated = generated
+	nextManifest, err := manifestV3(source, generated, manifest)
+	if err != nil {
+		return UpdateResult{}, err
 	}
 	if !write {
 		return result, nil
+	}
+	// Qualification may take long enough for a person or another tool to edit an
+	// owned file. Recheck every hash immediately before applying the result.
+	if _, err := verifyGeneratedOwnership(root, generated.Files, manifest); err != nil {
+		return UpdateResult{}, err
 	}
 	backups := make(map[string][]byte)
 	existed := make(map[string]bool)
@@ -364,11 +390,11 @@ func Update(ctx context.Context, model provider.Provider, store cas.Store, sourc
 			}
 		}
 	}
-	if err := writeUpdateSet(root, source, generated, manifest); err != nil {
+	if err := writeGeneratedFiles(root, generated.Files); err != nil {
 		rollback()
 		return UpdateResult{}, err
 	}
-	if err := testGo(ctx, root); err != nil {
+	if err := writeManifest(root, nextManifest); err != nil {
 		rollback()
 		return UpdateResult{}, err
 	}
@@ -378,7 +404,7 @@ func Update(ctx context.Context, model provider.Provider, store cas.Store, sourc
 // Digest identifies the normalized provider file set, independent of the
 // destination directory and ownership-manifest formatting.
 func Digest(generated GeneratedSet) (string, error) {
-	projection := GeneratedSet{Files: generated.Files, Summary: generated.Summary}
+	projection := GeneratedSet{Files: generated.Files, Artifacts: generated.Artifacts, Summary: generated.Summary}
 	encoded, err := json.Marshal(projection)
 	if err != nil {
 		return "", err
@@ -409,7 +435,7 @@ func parseGenerated(data []byte) (GeneratedSet, error) {
 			return GeneratedSet{}, fmt.Errorf("generated file set exceeds 32 MiB")
 		}
 		clean := filepath.ToSlash(filepath.Clean(file.Path))
-		if clean != file.Path || filepath.IsAbs(file.Path) || clean == "." || clean == ".." || strings.HasPrefix(clean, "../") || seen[clean] {
+		if scenarios.SafePath(file.Path) != nil || clean != file.Path || seen[clean] {
 			return GeneratedSet{}, fmt.Errorf("invalid or duplicate generated path %q", file.Path)
 		}
 		if filepath.Ext(clean) != ".go" && clean != "go.mod" && clean != "go.sum" {
@@ -431,7 +457,43 @@ func parseGenerated(data []byte) (GeneratedSet, error) {
 		}
 	}
 	sort.Slice(generated.Files, func(i, j int) bool { return generated.Files[i].Path < generated.Files[j].Path })
+	artifactNames := make(map[string]bool)
+	for _, artifact := range generated.Artifacts {
+		foldedName := strings.ToLower(artifact.Name)
+		if artifact.Name == "" || artifact.Package == "" || artifactNames[foldedName] {
+			return GeneratedSet{}, fmt.Errorf("generated artifacts require unique nonempty names and packages")
+		}
+		for _, r := range artifact.Name {
+			if !(r >= 'a' && r <= 'z' || r >= 'A' && r <= 'Z' || r >= '0' && r <= '9' || r == '-' || r == '_') {
+				return GeneratedSet{}, fmt.Errorf("invalid generated artifact name %q", artifact.Name)
+			}
+		}
+		if !localPackage(artifact.Package) {
+			return GeneratedSet{}, fmt.Errorf("invalid generated artifact package %q", artifact.Package)
+		}
+		artifactNames[foldedName] = true
+	}
+	sort.Slice(generated.Artifacts, func(i, j int) bool { return generated.Artifacts[i].Name < generated.Artifacts[j].Name })
 	return generated, nil
+}
+
+func localPackage(value string) bool {
+	if value == "." {
+		return true
+	}
+	if !strings.HasPrefix(value, "./") {
+		return false
+	}
+	relative := strings.TrimPrefix(value, "./")
+	if scenarios.SafePath(relative) != nil {
+		return false
+	}
+	for _, segment := range strings.Split(relative, "/") {
+		if segment == "..." {
+			return false
+		}
+	}
+	return true
 }
 
 func manifestSource(source specsource.Identity) ManifestSource {
@@ -441,9 +503,8 @@ func manifestSource(source specsource.Identity) ManifestSource {
 	}
 }
 
-func writeSet(root string, source specsource.Identity, generated GeneratedSet) error {
-	manifest := Manifest{Schema: manifestSchemaV2, Source: manifestSource(source)}
-	for _, file := range generated.Files {
+func writeGeneratedFiles(root string, files []GeneratedFile) error {
+	for _, file := range files {
 		path := filepath.Join(root, filepath.FromSlash(file.Path))
 		if err := os.MkdirAll(filepath.Dir(path), 0o755); err != nil {
 			return err
@@ -451,38 +512,92 @@ func writeSet(root string, source specsource.Identity, generated GeneratedSet) e
 		if err := os.WriteFile(path, []byte(file.Content), 0o644); err != nil {
 			return err
 		}
-		digest := sha256.Sum256([]byte(file.Content))
-		manifest.Files = append(manifest.Files, ManifestFile{Path: file.Path, SHA256: hex.EncodeToString(digest[:]), SpecIDs: file.SpecIDs})
 	}
+	return nil
+}
+
+func writeBundle(root string, bundle SourceBundle) error {
+	for _, file := range bundle.Files {
+		path := filepath.Join(root, filepath.FromSlash(file.Path))
+		if err := os.MkdirAll(filepath.Dir(path), 0o755); err != nil {
+			return err
+		}
+		if err := os.WriteFile(path, []byte(file.Content), 0o644); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func writeManifest(root string, manifest Manifest) error {
 	encoded, _ := json.MarshalIndent(manifest, "", "  ")
 	encoded = append(encoded, '\n')
 	return os.WriteFile(filepath.Join(root, manifestName), encoded, 0o644)
 }
 
-func writeUpdateSet(root string, source specsource.Identity, generated GeneratedSet, previous Manifest) error {
+func manifestV3(source specsource.Identity, generated GeneratedSet, previous Manifest) (Manifest, error) {
 	byPath := make(map[string]ManifestFile, len(previous.Files)+len(generated.Files))
 	for _, file := range previous.Files {
 		byPath[file.Path] = file
 	}
 	for _, file := range generated.Files {
-		path := filepath.Join(root, filepath.FromSlash(file.Path))
-		if err := os.MkdirAll(filepath.Dir(path), 0o755); err != nil {
-			return err
-		}
-		if err := os.WriteFile(path, []byte(file.Content), 0o644); err != nil {
-			return err
-		}
 		digest := sha256.Sum256([]byte(file.Content))
 		byPath[file.Path] = ManifestFile{Path: file.Path, SHA256: hex.EncodeToString(digest[:]), SpecIDs: file.SpecIDs}
 	}
-	manifest := Manifest{Schema: manifestSchemaV2, Source: manifestSource(source)}
+	evidence, err := QualificationEvidence(generated)
+	if err != nil {
+		return Manifest{}, err
+	}
+	evidenceDigest := sha256.Sum256(evidence)
+	manifest := Manifest{
+		Schema: manifestSchemaV3, Source: manifestSource(source),
+		Artifacts:     append([]GeneratedArtifact(nil), generated.Artifacts...),
+		Qualification: ManifestQualification{Schema: qualificationSchema, EvidenceSHA256: hex.EncodeToString(evidenceDigest[:])},
+	}
+	for _, observed := range generated.Qualification.Scenarios {
+		manifest.Qualification.Scenarios = append(manifest.Qualification.Scenarios, observed.ID)
+	}
 	for _, file := range byPath {
 		manifest.Files = append(manifest.Files, file)
 	}
 	sort.Slice(manifest.Files, func(i, j int) bool { return manifest.Files[i].Path < manifest.Files[j].Path })
-	encoded, _ := json.MarshalIndent(manifest, "", "  ")
-	encoded = append(encoded, '\n')
-	return os.WriteFile(filepath.Join(root, manifestName), encoded, 0o644)
+	return manifest, nil
+}
+
+func verifyGeneratedOwnership(root string, files []GeneratedFile, manifest Manifest) ([]string, error) {
+	owned := make(map[string]ManifestFile)
+	for _, file := range manifest.Files {
+		owned[file.Path] = file
+	}
+	var changes []string
+	for _, file := range files {
+		previous, exists := owned[file.Path]
+		path := filepath.Join(root, filepath.FromSlash(file.Path))
+		old, readErr := os.ReadFile(path)
+		if readErr == nil {
+			if !exists {
+				return nil, fmt.Errorf("refusing to overwrite unowned file %s", file.Path)
+			}
+			digest := sha256.Sum256(old)
+			if hex.EncodeToString(digest[:]) != previous.SHA256 {
+				return nil, fmt.Errorf("owned file %s changed outside GridSpec", file.Path)
+			}
+			if !bytes.Equal(old, []byte(file.Content)) {
+				changes = append(changes, "M "+file.Path)
+			}
+		} else if os.IsNotExist(readErr) {
+			if exists {
+				return nil, fmt.Errorf("owned file %s is missing", file.Path)
+			}
+			if !strings.HasPrefix(file.Path, "gridspec_gen/") {
+				return nil, fmt.Errorf("new generated file %s must be under gridspec_gen/", file.Path)
+			}
+			changes = append(changes, "A "+file.Path)
+		} else {
+			return nil, readErr
+		}
+	}
+	return changes, nil
 }
 
 func loadManifest(root string) (Manifest, error) {
@@ -504,13 +619,19 @@ func loadManifest(root string) (Manifest, error) {
 		if _, err := cid.Parse(manifest.StateCID); err != nil {
 			return Manifest{}, fmt.Errorf("invalid %s v1 state CID", manifestName)
 		}
-	case manifestSchemaV2:
+	case manifestSchemaV2, manifestSchemaV3:
 		identity, err := manifest.Source.identity()
 		if err != nil {
-			return Manifest{}, fmt.Errorf("invalid %s v2 source: %w", manifestName, err)
+			return Manifest{}, fmt.Errorf("invalid %s source: %w", manifestName, err)
 		}
 		if err := identity.Validate(); err != nil {
-			return Manifest{}, fmt.Errorf("invalid %s v2 source: %w", manifestName, err)
+			return Manifest{}, fmt.Errorf("invalid %s source: %w", manifestName, err)
+		}
+		if manifest.Schema == manifestSchemaV3 {
+			decodedDigest, digestErr := hex.DecodeString(manifest.Qualification.EvidenceSHA256)
+			if manifest.Qualification.Schema != qualificationSchema || digestErr != nil || len(decodedDigest) != sha256.Size || len(manifest.Artifacts) == 0 || len(manifest.Qualification.Scenarios) == 0 {
+				return Manifest{}, fmt.Errorf("invalid %s v3 qualification metadata", manifestName)
+			}
 		}
 	default:
 		return Manifest{}, fmt.Errorf("invalid %s schema", manifestName)
@@ -532,15 +653,4 @@ func (source ManifestSource) identity() (specsource.Identity, error) {
 		return specsource.Identity{}, err
 	}
 	return specsource.Identity{Kind: specsource.Kind(source.Kind), AcceptedCommit: accepted, Event: event, State: state}, nil
-}
-
-func testGo(ctx context.Context, root string) error {
-	command := exec.CommandContext(ctx, "go", "test", "./...")
-	command.Dir = root
-	command.Env = append(os.Environ(), "GOWORK=off")
-	output, err := command.CombinedOutput()
-	if err != nil {
-		return fmt.Errorf("generated Go tests failed: %s: %w", strings.TrimSpace(string(output)), err)
-	}
-	return nil
 }

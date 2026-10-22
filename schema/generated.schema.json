@@ -1,0 +1,51 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://promisegrid.github.io/gridspec/schema/generated.schema.json",
+  "title": "GridSpec generated ownership manifest v3",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema", "source", "artifacts", "qualification", "files"],
+  "properties": {
+    "schema": {"const": "gridspec.generated/v3"},
+    "source": {
+      "type": "object", "additionalProperties": false,
+      "required": ["kind", "accepted_commit", "event", "state"],
+      "properties": {
+        "kind": {"enum": ["accepted", "proposal"]},
+        "accepted_commit": {"type": "string", "minLength": 1},
+        "event": {"type": "string", "minLength": 1},
+        "state": {"type": "string", "minLength": 1}
+      }
+    },
+    "artifacts": {
+      "type": "array", "minItems": 1,
+      "items": {
+        "type": "object", "additionalProperties": false, "required": ["name", "package"],
+        "properties": {
+          "name": {"type": "string", "pattern": "^[A-Za-z0-9_-]+$"},
+          "package": {"type": "string", "pattern": "^(\\.|\\./[^/:\\\\]+(?:/[^/:\\\\]+)*)$"}
+        }
+      }
+    },
+    "qualification": {
+      "type": "object", "additionalProperties": false,
+      "required": ["schema", "evidence_sha256", "scenarios"],
+      "properties": {
+        "schema": {"const": "gridspec.qualification/v1"},
+        "evidence_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+        "scenarios": {"type": "array", "minItems": 1, "items": {"type": "string"}}
+      }
+    },
+    "files": {
+      "type": "array",
+      "items": {
+        "type": "object", "additionalProperties": false, "required": ["path", "sha256", "spec_ids"],
+        "properties": {
+          "path": {"type": "string"},
+          "sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+          "spec_ids": {"type": "array", "items": {"type": "string"}}
+        }
+      }
+    }
+  }
+}

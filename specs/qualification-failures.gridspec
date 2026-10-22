@@ -1,0 +1,16 @@
+gridspec 1
+assert exists graph graph.gridspec.qualification
+put edge gridspec.qualification.flow.gotest.reject {
+  title = "Go tests fail", summary = "Reject the staged module when its supplemental generated tests fail.",
+  graph_id = "graph.gridspec.qualification", kind = "flow", status = "active",
+  from = "gridspec.qualification.gotest", to = "gridspec.qualification.reject",
+  attrs = { specdot_branch = "fail" },
+  location = { file = "views/gridspec-qualification.dot", line = 20, column = 1 }
+}
+put edge gridspec.qualification.flow.command.reject {
+  title = "Command oracle fails", summary = "Reject the staged module when an accepted command observation differs.",
+  graph_id = "graph.gridspec.qualification", kind = "flow", status = "active",
+  from = "gridspec.qualification.command", to = "gridspec.qualification.reject",
+  attrs = { specdot_branch = "fail" },
+  location = { file = "views/gridspec-qualification.dot", line = 22, column = 1 }
+}

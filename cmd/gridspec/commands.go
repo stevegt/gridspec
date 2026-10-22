@@ -23,6 +23,8 @@ import (
 	"github.com/promisegrid/gridspec/internal/project"
 	"github.com/promisegrid/gridspec/internal/provider"
 	"github.com/promisegrid/gridspec/internal/report"
+	scenarioengine "github.com/promisegrid/gridspec/internal/scenarios"
+	"github.com/promisegrid/gridspec/internal/specdiff"
 	"github.com/promisegrid/gridspec/internal/view"
 )
 
@@ -303,6 +305,124 @@ func runDescribe(args []string, stdout, stderr io.Writer) int {
 	return 0
 }
 
+func runScenarios(args []string, stdout, stderr io.Writer) int {
+	flags := flag.NewFlagSet("gridspec scenarios", flag.ContinueOnError)
+	flags.SetOutput(stderr)
+	graph := flags.String("graph", "", "propose qualification for one graph")
+	if err := flags.Parse(args); err != nil || len(flags.Args()) != 0 {
+		return 2
+	}
+	current, selected, ok := loadProjectSource(stderr, "scenarios", "")
+	if !ok {
+		return 2
+	}
+	pending, err := scenarioengine.Missing(selected.State, *graph)
+	if err != nil {
+		fmt.Fprintln(stderr, "gridspec scenarios:", err)
+		return 2
+	}
+	if len(pending) == 0 {
+		fmt.Fprintln(stdout, "qualification scenarios already complete")
+		return 0
+	}
+	generator, err := provider.FromEnvironment()
+	if err != nil {
+		fmt.Fprintln(stderr, "gridspec scenarios:", err)
+		return 2
+	}
+	proposal, result, auditCID, err := publishScenarioProposal(context.Background(), current, selected, generator, *graph)
+	if err != nil {
+		fmt.Fprintln(stderr, "gridspec scenarios:", err)
+		return 1
+	}
+	fmt.Fprintf(stdout, "proposal %s\nref %s\nscenarios %d\nprovider %s\nresponse %s\naudit %s\n", proposal.Event.CID, proposal.Ref, result.Count, result.Response.Model, result.Response.ID, auditCID)
+	return 0
+}
+
+func publishScenarioProposal(ctx context.Context, current *project.Project, selected project.Source, generator provider.Provider, graph string) (project.Proposal, scenarioengine.Result, cid.Cid, error) {
+	if selected.Identity.IsProposal() {
+		return project.Proposal{}, scenarioengine.Result{}, cid.Undef, fmt.Errorf("a proposal preview with missing qualification scenarios cannot create another proposal")
+	}
+	result, err := scenarioengine.Generate(ctx, generator, selected.State, graph)
+	if err != nil {
+		return project.Proposal{}, result, cid.Undef, err
+	}
+	if result.Noop {
+		return project.Proposal{}, result, cid.Undef, fmt.Errorf("qualification scenarios are already complete")
+	}
+	audit, err := scenarioengine.Audit(selected.State, result)
+	if err != nil {
+		return project.Proposal{}, result, cid.Undef, fmt.Errorf("encode audit: %w", err)
+	}
+	auditCID, err := gridwire.RawCID(audit)
+	if err != nil {
+		return project.Proposal{}, result, cid.Undef, fmt.Errorf("identify audit: %w", err)
+	}
+	if err := current.Repository.Put(ctx, auditCID, audit); err != nil {
+		return project.Proposal{}, result, cid.Undef, fmt.Errorf("store audit: %w", err)
+	}
+	proposal, err := current.ProposeFrom(ctx, selected, result.Program, []cid.Cid{auditCID})
+	return proposal, result, auditCID, err
+}
+
+func ensureQualificationScenarios(ctx context.Context, current *project.Project, selected project.Source, generator provider.Provider, stdout io.Writer) (bool, error) {
+	pending, err := scenarioengine.Missing(selected.State, "")
+	if err != nil {
+		return false, err
+	}
+	if len(pending) == 0 {
+		return true, nil
+	}
+	proposal, result, _, err := publishScenarioProposal(ctx, current, selected, generator, "")
+	if err != nil {
+		return false, err
+	}
+	fmt.Fprintf(stdout, "qualification scenarios are missing; proposal %s adds %d scenario contract(s)\nno code generated\n", proposal.Event.CID, result.Count)
+	return false, nil
+}
+
+func runDiff(args []string, stdout, stderr io.Writer) int {
+	flags := flag.NewFlagSet("gridspec diff", flag.ContinueOnError)
+	flags.SetOutput(stderr)
+	proposalName := flags.String("proposal", "", "proposal event CID or ref (required)")
+	formatName := flags.String("format", "text", "text or json")
+	if err := flags.Parse(args); err != nil || len(flags.Args()) != 0 || *proposalName == "" {
+		fmt.Fprintln(stderr, "usage: gridspec diff --proposal <CID-or-ref> [--format text|json]")
+		return 2
+	}
+	if *formatName != "text" && *formatName != "json" {
+		fmt.Fprintf(stderr, "gridspec diff: invalid --format %q\n", *formatName)
+		return 2
+	}
+	current, err := project.Open(context.Background(), ".")
+	if err != nil {
+		fmt.Fprintln(stderr, "gridspec diff:", err)
+		return 2
+	}
+	accepted, err := current.LoadSource(context.Background(), "")
+	if err != nil {
+		fmt.Fprintln(stderr, "gridspec diff:", err)
+		return 2
+	}
+	proposed, err := current.LoadSource(context.Background(), *proposalName)
+	if err != nil {
+		fmt.Fprintln(stderr, "gridspec diff:", err)
+		return 2
+	}
+	report, err := specdiff.Compare(accepted.State, proposed.State)
+	if err == nil {
+		err = specdiff.Write(stdout, *formatName, report)
+	}
+	if err != nil {
+		fmt.Fprintln(stderr, "gridspec diff:", err)
+		return 2
+	}
+	if len(report.Changes) != 0 {
+		return 1
+	}
+	return 0
+}
+
 func runBuild(args []string, stdout, stderr io.Writer) int {
 	flags := flag.NewFlagSet("gridspec build", flag.ContinueOnError)
 	flags.SetOutput(stderr)
@@ -321,6 +441,14 @@ func runBuild(args []string, stdout, stderr io.Writer) int {
 		fmt.Fprintln(stderr, "gridspec build:", err)
 		return 2
 	}
+	ready, err := ensureQualificationScenarios(context.Background(), current, selected, model, stdout)
+	if err != nil {
+		fmt.Fprintln(stderr, "gridspec build:", err)
+		return 1
+	}
+	if !ready {
+		return 1
+	}
 	generated, err := goworkflow.Build(context.Background(), model, current.Repository, selected.Identity, *output)
 	if err != nil {
 		fmt.Fprintln(stderr, "gridspec build:", err)
@@ -331,12 +459,17 @@ func runBuild(args []string, stdout, stderr io.Writer) int {
 		fmt.Fprintln(stderr, "gridspec build:", err)
 		return 2
 	}
+	evidence, err := goworkflow.QualificationEvidence(generated)
+	if err != nil {
+		fmt.Fprintln(stderr, "gridspec build:", err)
+		return 2
+	}
 	generator := generated.ProviderModel + "/" + generated.ResponseID
 	target := "go-build"
 	if selected.Identity.IsProposal() {
 		target = "go-build-preview"
 	}
-	candidate, err := current.PublishCandidate(context.Background(), selected.Identity, target, generator, digest, []byte("go test ./... passed\n"))
+	candidate, err := current.PublishCandidate(context.Background(), selected.Identity, target, generator, digest, evidence)
 	if err != nil {
 		fmt.Fprintln(stderr, "gridspec build: publish candidate:", err)
 		return 1
@@ -452,6 +585,14 @@ func runUpdate(args []string, stdout, stderr io.Writer) int {
 		fmt.Fprintln(stderr, "gridspec update:", err)
 		return 2
 	}
+	ready, err := ensureQualificationScenarios(context.Background(), current, selected, model, stdout)
+	if err != nil {
+		fmt.Fprintln(stderr, "gridspec update:", err)
+		return 1
+	}
+	if !ready {
+		return 1
+	}
 	result, err := goworkflow.Update(context.Background(), model, current.Repository, selected.Identity, *goRoot, *write)
 	if err != nil {
 		fmt.Fprintln(stderr, "gridspec update:", err)
@@ -470,16 +611,17 @@ func runUpdate(args []string, stdout, stderr io.Writer) int {
 		fmt.Fprintln(stderr, "gridspec update:", err)
 		return 2
 	}
-	evidence := "dry run: syntax, formatting, path, and ownership checks passed; Go tests not run\n"
-	if *write {
-		evidence = "owned files updated and go test ./... passed\n"
+	evidence, err := goworkflow.QualificationEvidence(result.Generated)
+	if err != nil {
+		fmt.Fprintln(stderr, "gridspec update:", err)
+		return 2
 	}
 	generator := result.Generated.ProviderModel + "/" + result.Generated.ResponseID
 	target := "go-update"
 	if selected.Identity.IsProposal() {
 		target = "go-update-preview"
 	}
-	candidate, err := current.PublishCandidate(context.Background(), selected.Identity, target, generator, digest, []byte(evidence))
+	candidate, err := current.PublishCandidate(context.Background(), selected.Identity, target, generator, digest, evidence)
 	if err != nil {
 		fmt.Fprintln(stderr, "gridspec update: publish candidate:", err)
 		return 1

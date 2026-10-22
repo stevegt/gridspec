@@ -21,7 +21,7 @@ those formats authoritative.
 | `SDV320`–`SDV356` | Machines | Finite variables, run-to-completion semantics, hierarchy/regions, events, guards/actions/timers, conflict resolution, reachability, event accounting, eventless cycles, entry/exit actions, pseudostates, claim validity, agent ownership, liveness assumptions, fork/join structure, and channel send/receive ownership and completeness. |
 | `SDV400`–`SDV428` | Data | Type kinds and references, records/enums/maps/unions/collections, fields/cardinality, mutable identity, exclusive authority, evidence-vs-authority, logical/physical identity, replicas, encoding, migrations, authority agents, typed relationships, ownership, and acyclic containment. |
 | `SDV500`–`SDV521` | Channels/effects | Typed agent endpoints, complete and valid delivery semantics, exactly-once mechanisms, controlling agent/resource, outcome coverage, destructive recovery contracts, retention contradictions, and exclusive multi-publisher conflicts. |
-| `SDV600`–`SDV607` | Build readiness | Effective contracts, machine ownership, required titles, scenarios, constrained latitude, secrets, trust boundaries, and graph-level documentation. |
+| `SDV600`–`SDV610` | Build readiness | Effective contracts, machine ownership, required titles, scenarios, constrained latitude, secrets, trust boundaries, graph-level documentation, and bounded executable scenario contracts. |
 | `SDV700`–`SDV701` | Finite verification | Counterexamples and inconclusive bounded exploration. |
 
 ## Critical examples
@@ -43,6 +43,8 @@ those formats authoritative.
 - `SDV521`: multiple agents publish one exclusive resource without a selection
   policy.
 - `SDV602`: an active build-ready graph, node, or edge has no title.
+- `SDV610`: an active executable scenario contract is malformed or unbounded,
+  or a scenario payload is attached to something other than a scenario graph.
 - `SDV700`: finite exploration produced a counterexample trace.
 - `SDV701`: a proof could not finish within its model or configured bounds.
 

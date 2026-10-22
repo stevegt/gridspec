@@ -79,6 +79,23 @@ the replacement transaction itself without changing unrelated fields, and
 links the exact request and response from the proposal event through CAS.
 Review and accept the proposal separately.
 
+Executable command scenarios use the same authority path:
+
+```sh
+gridspec scenarios                 # propose the missing command oracle
+gridspec scenarios --graph ID      # fill one reviewed scenario graph
+gridspec diff --proposal <CID>     # deterministic semantic review
+gridspec accept <CID>              # separate signed decision
+```
+
+`diff` emits sorted recursive JSON-pointer changes in text or JSON. Its exit
+status is 0 for equal states, 1 for differences, and 2 for usage or read errors.
+
+If `build` or `update` finds no accepted executable scenario, it performs the
+first step automatically, publishes only an audited unsigned spec proposal,
+and stops without emitting code. A proposal preview with the same omission
+fails instead of recursively proposing another proposal.
+
 ## Legacy migration
 
 ```sh
@@ -121,23 +138,41 @@ gridspec update --source . --write  # tests and rolls back on failure
 gridspec update --proposal <proposal-CID> --source . # preview only
 ```
 
-Generated trees contain a `gridspec.generated/v2` manifest in
+Generated trees contain a `gridspec.generated/v3` manifest in
 `.gridspec-generated.json`, recording whether the input was accepted or
 proposed, its accepted-base commit, event and state CIDs, owned paths, content
-hashes, and contributing spec IDs. Version 1 manifests remain readable. `update`
-refuses to overwrite an unowned file or a generated file changed by hand. New
+hashes, contributing spec IDs, artifact-to-package mappings, and qualification
+evidence metadata. Version 1 and 2 manifests remain readable and are upgraded
+by the next successful update. `update` refuses to overwrite an unowned file or
+a generated file changed by hand. New
 update files must be under `gridspec_gen/`; proposal updates are dry-run only.
-Successful builds and update runs also publish an unsigned derived-artifact
-message under
+Dry-run updates reconstruct and qualify a temporary module without changing the
+source tree. Write mode applies only those already-qualified changes after a
+second ownership-hash check. Successful builds and update runs also publish an
+unsigned derived-artifact message under
 `refs/gridspec/candidates/...`, binding the accepted commit, normalized output
 digest, provider provenance, exact CAS input CIDs, and verification evidence.
 Proposal builds use preview targets and name both the proposal event and result
 state. A candidate never changes accepted specification state.
 
-Conformance is evidence, not regeneration: it resolves Go symbols, executes
-isolated command fixtures and exact Go tests, checks optional semantic traces,
-and enforces coverage floors, reviewed exclusions, and a baseline. These are
-bounded observations, not a proof of arbitrary program equivalence.
+Generated-code qualification is mandatory and independent of model-authored
+tests. GridSpec first runs `go test ./...` as supplemental evidence, then builds
+the declared artifacts and executes every accepted `contract.scenario` in a
+fresh fixture workspace. Ordered steps are separate processes in the same
+workspace, so persistence and restart behavior are observable. Exit status,
+stdout, stderr, declared files, and undeclared file changes are checked exactly;
+timeouts, repeats, fixture size, and output size are bounded. Exact normalized
+observations and file hashes are stored as `gridspec.qualification/v1` evidence
+through the existing artifact CAS envelope. Generated code executes in the
+trusted local environment; this is resource bounding, not an OS sandbox.
+Artifact mappings are restricted to `.` or `./`-relative packages inside the
+staged generated module.
+
+Conformance of hand-written code is evidence, not regeneration: it resolves Go
+symbols, executes isolated command fixtures and exact Go tests, checks optional
+semantic traces, and enforces coverage floors, reviewed exclusions, and a
+baseline. These are bounded observations, not a proof of arbitrary program
+equivalence.
 `--record` explicitly publishes the exact report, checker configuration,
 implementation digest, evidence classes, exclusions, and diagnostics as an
 unsigned content-addressed candidate; ordinary conformance remains read-only.
